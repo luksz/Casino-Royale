@@ -1,7 +1,8 @@
 import { Chip } from "./Chip";
+import { ChipStack } from "./ChipStack";
 import { cn } from "@/lib/utils";
 
-const DENOMINATIONS = [1, 5, 25, 100, 500];
+const DENOMINATIONS = [1, 5, 25, 100, 500, 1000, 5000];
 
 interface BetControlProps {
   bet: number;
@@ -16,19 +17,33 @@ export function BetControl({ bet, onAdd, onClear, onAllIn, disabled, maxBet }: B
   return (
     <div className="flex flex-col items-center gap-3">
       <p className="text-ivory/50 text-xs uppercase tracking-widest">Place your bet</p>
-      <p className="font-display text-3xl text-gold-400 font-bold min-w-[4rem] text-center">
-        {bet.toLocaleString()}
-      </p>
-      <div className="flex gap-2">
+
+      {/* Chip stack + amount */}
+      <div className="flex items-center gap-3 min-h-[40px]">
+        {bet > 0 ? (
+          <>
+            <ChipStack amount={bet} size={36} />
+            <p className="font-display text-3xl text-gold-400 font-bold tabular-nums">
+              {bet.toLocaleString()}
+            </p>
+          </>
+        ) : (
+          <p className="font-display text-3xl text-ivory/20 font-bold">0</p>
+        )}
+      </div>
+
+      {/* Chip buttons */}
+      <div className="flex gap-2 flex-wrap justify-center">
         {DENOMINATIONS.map((d) => (
           <Chip
             key={d}
             value={d}
-            disabled={disabled || (maxBet !== undefined && bet + d > maxBet)}
+            disabled={disabled || (maxBet !== undefined && d > maxBet)}
             onClick={() => onAdd(d)}
           />
         ))}
       </div>
+
       <div className="flex gap-2">
         <button onClick={onClear} disabled={disabled || bet === 0} className="btn-ghost text-sm py-1 px-4">
           Clear

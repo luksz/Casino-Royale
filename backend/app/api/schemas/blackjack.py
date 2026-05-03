@@ -6,6 +6,8 @@ from app.core.games.blackjack.state import GamePhase, Outcome, PlayerAction
 class StartRoundRequest(BaseModel):
     player_id: str
     bet: int
+    perfect_pairs: int = 0
+    twenty_one_three: int = 0
 
 
 class ActionRequest(BaseModel):
@@ -20,6 +22,13 @@ class HandStateResponse(BaseModel):
     is_blackjack: bool
 
 
+class SideBetResultResponse(BaseModel):
+    bet_type: str
+    stake: int
+    outcome: str
+    net_delta: int
+
+
 class RoundStateResponse(BaseModel):
     round_id: str
     phase: GamePhase
@@ -30,3 +39,4 @@ class RoundStateResponse(BaseModel):
     legal_actions: list[PlayerAction]
     outcomes: dict[str, Outcome] | None
     net_delta: int | None
+    side_bet_results: list[SideBetResultResponse] = []

@@ -1,11 +1,13 @@
 import { cn } from "@/lib/utils";
 
 const CHIP_STYLES: Record<number, string> = {
-  1: "bg-gray-200 text-gray-800 border-gray-400",
-  5: "bg-red-600 text-white border-red-800",
-  25: "bg-green-600 text-white border-green-800",
-  100: "bg-blue-600 text-white border-blue-800",
-  500: "bg-purple-600 text-white border-purple-800",
+  1:    "bg-gray-200 text-gray-800 border-gray-400",
+  5:    "bg-red-600 text-white border-red-800",
+  25:   "bg-green-600 text-white border-green-800",
+  100:  "bg-blue-600 text-white border-blue-800",
+  500:  "bg-purple-600 text-white border-purple-800",
+  1000: "bg-yellow-500 text-gray-900 border-yellow-600",
+  5000: "bg-orange-500 text-white border-orange-700",
 };
 
 interface ChipProps {

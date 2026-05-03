@@ -6,6 +6,7 @@ import { usePlayerBalance } from "@/hooks/usePlayer";
 import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
 import { RouletteWheel, calcWheelRotation, RED_NUMS } from "@/components/roulette/RouletteWheel";
+import { ChipStack } from "@/components/casino/ChipStack";
 import { cn } from "@/lib/utils";
 
 interface BetEntry { bet_type: string; amount: number; number?: number }
@@ -30,7 +31,7 @@ const OUTSIDE_BETS = [
   { label: "3rd 12", key: "DOZEN_THIRD",  color: "bg-purple-800 hover:bg-purple-700" },
 ];
 
-const CHIP_VALUES = [1, 5, 25, 100, 500];
+const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
 
 export default function RoulettePage() {
   const navigate = useNavigate();
@@ -184,25 +185,26 @@ export default function RoulettePage() {
 
         {/* Controls */}
         <div className="card-surface p-5 w-full flex flex-col items-center gap-4">
-          {/* Chip selector — always show all values, disable if exceeds balance */}
+          {/* Total bet + chip stack display */}
+          {totalBet > 0 && (
+            <div className="flex items-center gap-3">
+              <ChipStack amount={totalBet} size={34} />
+              <span className="text-gold-400 font-black text-xl tabular-nums">{totalBet.toLocaleString()}</span>
+            </div>
+          )}
+
+          {/* Chip selector */}
           <div className="flex gap-2 flex-wrap justify-center">
             {CHIP_VALUES.map(v => (
-              <button
+              <ChipButton
                 key={v}
+                value={v}
+                selected={selectedChip === v}
+                disabled={spinning || v > balance}
                 onClick={() => setSelectedChip(v)}
-                disabled={spinning || (balance > 0 && v > balance)}
-                className={cn(
-                  "w-12 h-12 rounded-full font-bold text-sm border-4 transition-all disabled:opacity-30",
-                  selectedChip === v
-                    ? "border-gold-400 bg-gold-500 text-navy-900 scale-110 shadow-lg"
-                    : "border-gray-600 bg-gray-800 text-white hover:border-gray-400"
-                )}
-              >
-                {v}
-              </button>
+              />
             ))}
-            {/* All In chip — only show if balance is above largest preset */}
-            {balance > 500 && (
+            {balance > 5000 && (
               <button
                 onClick={() => setSelectedChip(balance)}
                 disabled={spinning}
@@ -274,5 +276,36 @@ function BetBadge({ amount }: { amount: number }) {
     <span className="absolute -top-1 -right-1 bg-gold-400 text-navy-900 rounded-full w-4 h-4 flex items-center justify-center font-black leading-none text-[9px] pointer-events-none">
       {amount >= 1000 ? `${Math.floor(amount / 1000)}k` : amount}
     </span>
+  );
+}
+
+const CHIP_STYLES_MAP: Record<number, { bg: string; border: string; text: string }> = {
+  1:    { bg: "#d1d5db", border: "#6b7280", text: "#1f2937" },
+  5:    { bg: "#dc2626", border: "#7f1d1d", text: "#ffffff" },
+  25:   { bg: "#16a34a", border: "#14532d", text: "#ffffff" },
+  100:  { bg: "#2563eb", border: "#1e3a8a", text: "#ffffff" },
+  500:  { bg: "#7c3aed", border: "#3b0764", text: "#ffffff" },
+  1000: { bg: "#ca8a04", border: "#713f12", text: "#ffffff" },
+  5000: { bg: "#ea580c", border: "#7c2d12", text: "#ffffff" },
+};
+
+function ChipButton({ value, selected, disabled, onClick }: {
+  value: number; selected: boolean; disabled: boolean; onClick: () => void;
+}) {
+  const s = CHIP_STYLES_MAP[value] ?? { bg: "#4b5563", border: "#374151", text: "#fff" };
+  const label = value >= 1000 ? `${value / 1000}K` : String(value);
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "w-12 h-12 rounded-full font-black text-sm border-[3px] transition-all shadow-md",
+        "disabled:opacity-30 active:scale-95",
+        selected ? "scale-110 shadow-lg ring-2 ring-gold-400 ring-offset-1 ring-offset-navy-900" : "hover:scale-105",
+      )}
+      style={{ backgroundColor: s.bg, borderColor: s.border, color: s.text }}
+    >
+      {label}
+    </button>
   );
 }

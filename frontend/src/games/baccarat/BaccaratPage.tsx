@@ -6,7 +6,9 @@ import { usePlayerBalance } from "@/hooks/usePlayer";
 import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
 import { PlayingCard } from "@/components/cards/PlayingCard";
-import { BetInput } from "@/components/casino/BetInput";
+import { Chip } from "@/components/casino/Chip";
+import { ChipStack } from "@/components/casino/ChipStack";
+import { cn } from "@/lib/utils";
 
 type BaccaratResult = {
   player_cards: string[];
@@ -26,7 +28,8 @@ const BETS = [
   { key: "BANKER", label: "Banker", odds: "0.95 : 1", color: "bg-red-800 hover:bg-red-700 border-red-600" },
 ];
 
-// Real baccarat deal order: P1 B1 P2 B2 [P3] [B3]
+const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
+
 function playerDealIndex(i: number) { return i * 2; }
 function bankerDealIndex(i: number) { return i * 2 + 1; }
 
@@ -36,7 +39,8 @@ export default function BaccaratPage() {
   const { data: balanceData, refetch } = usePlayerBalance(currentPlayerId);
   const { cardDeal, win, lose } = useSound();
   const [selectedBet, setSelectedBet] = useState<string | null>(null);
-  const [stake, setStake] = useState(50);
+  const [stake, setStake] = useState(0);
+  const [lastStake, setLastStake] = useState(0);
   const [result, setResult] = useState<BaccaratResult | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -45,10 +49,11 @@ export default function BaccaratPage() {
   const balance = balanceData?.balance ?? 0;
 
   async function play() {
-    if (!selectedBet || loading) return;
+    if (!selectedBet || loading || stake <= 0) return;
     setLoading(true);
     setResult(null);
     cardDeal();
+    setLastStake(stake);
     try {
       const res = await apiPost<BaccaratResult>("/baccarat/play", {
         player_id: currentPlayerId,
@@ -134,6 +139,7 @@ export default function BaccaratPage() {
         </AnimatePresence>
 
         <div className="card-surface p-6 w-full flex flex-col items-center gap-5">
+          {/* Bet type selector */}
           <div className="grid grid-cols-3 gap-3 w-full">
             {BETS.map(b => (
               <button key={b.key} onClick={() => setSelectedBet(b.key)} disabled={loading}
@@ -145,12 +151,71 @@ export default function BaccaratPage() {
             ))}
           </div>
 
-          <BetInput value={stake} onChange={setStake} max={balance} disabled={loading} label="Stake" />
+          {/* Stake display */}
+          <div className="flex items-center gap-3 min-h-[40px]">
+            {stake > 0 ? (
+              <>
+                <ChipStack amount={stake} size={36} />
+                <span className="font-display text-3xl text-gold-400 font-bold tabular-nums">{stake.toLocaleString()}</span>
+              </>
+            ) : (
+              <span className="font-display text-3xl text-ivory/20 font-bold">0</span>
+            )}
+          </div>
 
-          <button onClick={play} disabled={!selectedBet || loading || stake > balance || stake < 1}
-            className="btn-primary w-full text-base py-4">
-            {loading ? "Dealing…" : `Deal · ${stake.toLocaleString()} chips`}
-          </button>
+          {/* Chip buttons */}
+          <div className="flex gap-2 flex-wrap justify-center">
+            {CHIP_VALUES.map(v => (
+              <Chip
+                key={v}
+                value={v}
+                disabled={loading || stake + v > balance}
+                onClick={() => setStake(s => s + v)}
+              />
+            ))}
+            {balance > 5000 && (
+              <button
+                onClick={() => setStake(balance)}
+                disabled={loading || stake >= balance}
+                className={cn(
+                  "px-3 h-12 rounded-full font-bold text-xs border-4 transition-all disabled:opacity-30",
+                  "border-gold-600/40 bg-navy-800 text-gold-500/70 hover:text-gold-400 hover:border-gold-400/60"
+                )}
+              >
+                All In
+              </button>
+            )}
+          </div>
+
+          {/* Re-bet row */}
+          {lastStake > 0 && (
+            <div className="flex gap-2 w-full">
+              <button onClick={() => setStake(lastStake)} disabled={loading || lastStake > balance}
+                className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
+                Re-bet <span className="text-ivory/40">({lastStake.toLocaleString()})</span>
+              </button>
+              <button onClick={() => setStake(Math.max(1, Math.floor(lastStake / 2)))} disabled={loading}
+                className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
+                ½ Bet
+              </button>
+              <button onClick={() => setStake(lastStake * 2)} disabled={loading || lastStake * 2 > balance}
+                className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
+                ×2 Bet
+              </button>
+            </div>
+          )}
+
+          {/* Clear + Deal */}
+          <div className="flex gap-3 w-full">
+            <button onClick={() => setStake(0)} disabled={stake === 0 || loading}
+              className="btn-ghost flex-1 text-sm py-2">
+              Clear{stake > 0 ? ` (${stake.toLocaleString()})` : ""}
+            </button>
+            <button onClick={play} disabled={!selectedBet || loading || stake <= 0 || stake > balance}
+              className="btn-primary flex-1 text-base py-3">
+              {loading ? "Dealing…" : `Deal · ${stake.toLocaleString()}`}
+            </button>
+          </div>
         </div>
       </div>
     </div>

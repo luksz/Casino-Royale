@@ -6,7 +6,9 @@ import { usePlayerBalance } from "@/hooks/usePlayer";
 import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
 import { PlayingCard } from "@/components/cards/PlayingCard";
-import { BetInput } from "@/components/casino/BetInput";
+import { Chip } from "@/components/casino/Chip";
+import { ChipStack } from "@/components/casino/ChipStack";
+import { cn } from "@/lib/utils";
 
 interface WarResult {
   player_card: string;
@@ -25,12 +27,15 @@ const RESULT_MSGS: Record<string, { text: string; color: string }> = {
   WAR_LOSE: { text: "War — Dealer Wins ⚔️", color: "text-red-400" },
 };
 
+const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
+
 export default function WarPage() {
   const navigate = useNavigate();
   const { currentPlayerId, recordRound } = useSessionStore();
   const { data: balanceData, refetch } = usePlayerBalance(currentPlayerId);
   const { cardDeal, win, lose } = useSound();
-  const [stake, setStake] = useState(25);
+  const [stake, setStake] = useState(0);
+  const [lastStake, setLastStake] = useState(0);
   const [result, setResult] = useState<WarResult | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,14 +45,15 @@ export default function WarPage() {
   const isWar = result && (result.result === "WAR_WIN" || result.result === "WAR_LOSE");
   const msg = result ? RESULT_MSGS[result.result] : null;
 
-  // Result delay: base cards dealt at index 0/1, war cards at 2/3
   const totalDealt = result ? (isWar ? 4 : 2) : 0;
   const resultDelay = totalDealt * 0.45 + 0.3;
 
   async function play() {
+    if (loading || stake <= 0) return;
     setLoading(true);
     setResult(null);
     cardDeal();
+    setLastStake(stake);
     try {
       const res = await apiPost<WarResult>("/war/play", { player_id: currentPlayerId, stake });
       setResult(res);
@@ -73,8 +79,8 @@ export default function WarPage() {
         {/* Cards */}
         <div className="grid grid-cols-2 gap-6 w-full">
           {(["YOU", "DEALER"] as const).map((side, si) => {
-            const firstCard  = si === 0 ? result?.player_card     : result?.dealer_card;
-            const warCard    = si === 0 ? result?.war_player_card  : result?.war_dealer_card;
+            const firstCard = si === 0 ? result?.player_card     : result?.dealer_card;
+            const warCard   = si === 0 ? result?.war_player_card  : result?.war_dealer_card;
             return (
               <div key={side} className="table-zone p-5 flex flex-col items-center gap-3">
                 <p className="text-ivory/40 text-xs uppercase tracking-widest">{side}</p>
@@ -82,9 +88,7 @@ export default function WarPage() {
                   {firstCard
                     ? <>
                         <PlayingCard code={firstCard} dealIndex={si} />
-                        {isWar && (
-                          <PlayingCard code={warCard ?? "??"} dealIndex={si + 2} />
-                        )}
+                        {isWar && <PlayingCard code={warCard ?? "??"} dealIndex={si + 2} />}
                       </>
                     : <div className="w-16 h-24 rounded-xl border-2 border-dashed border-navy-600/50 flex items-center justify-center text-ivory/10 text-xs">?</div>
                   }
@@ -94,7 +98,6 @@ export default function WarPage() {
           })}
         </div>
 
-        {/* War banner */}
         <AnimatePresence>
           {isWar && (
             <motion.div
@@ -109,7 +112,6 @@ export default function WarPage() {
           )}
         </AnimatePresence>
 
-        {/* Result */}
         <AnimatePresence>
           {result && msg && (
             <motion.div
@@ -128,15 +130,65 @@ export default function WarPage() {
         </AnimatePresence>
 
         {/* Controls */}
-        <div className="card-surface p-6 w-full flex flex-col items-center gap-5">
-          <BetInput value={stake} onChange={setStake} max={balance} disabled={loading} label="Stake" />
-          <button
-            onClick={play}
-            disabled={loading || stake > balance || stake < 1}
-            className="btn-primary w-full text-base py-4"
-          >
-            {loading ? "Dealing…" : `⚔️ Go to War · ${stake.toLocaleString()} chips`}
-          </button>
+        <div className="card-surface p-6 w-full flex flex-col items-center gap-4">
+          {/* Stake display */}
+          <div className="flex items-center gap-3 min-h-[40px]">
+            {stake > 0 ? (
+              <>
+                <ChipStack amount={stake} size={36} />
+                <span className="font-display text-3xl text-gold-400 font-bold tabular-nums">{stake.toLocaleString()}</span>
+              </>
+            ) : (
+              <span className="font-display text-3xl text-ivory/20 font-bold">0</span>
+            )}
+          </div>
+
+          {/* Chip buttons */}
+          <div className="flex gap-2 flex-wrap justify-center">
+            {CHIP_VALUES.map(v => (
+              <Chip key={v} value={v} disabled={loading || stake + v > balance} onClick={() => setStake(s => s + v)} />
+            ))}
+            {balance > 5000 && (
+              <button
+                onClick={() => setStake(balance)}
+                disabled={loading || stake >= balance}
+                className={cn(
+                  "px-3 h-12 rounded-full font-bold text-xs border-4 transition-all disabled:opacity-30",
+                  "border-gold-600/40 bg-navy-800 text-gold-500/70 hover:text-gold-400 hover:border-gold-400/60"
+                )}
+              >
+                All In
+              </button>
+            )}
+          </div>
+
+          {/* Re-bet row */}
+          {lastStake > 0 && (
+            <div className="flex gap-2 w-full">
+              <button onClick={() => setStake(lastStake)} disabled={loading || lastStake > balance}
+                className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
+                Re-bet <span className="text-ivory/40">({lastStake.toLocaleString()})</span>
+              </button>
+              <button onClick={() => setStake(Math.max(1, Math.floor(lastStake / 2)))} disabled={loading}
+                className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
+                ½ Bet
+              </button>
+              <button onClick={() => setStake(lastStake * 2)} disabled={loading || lastStake * 2 > balance}
+                className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
+                ×2 Bet
+              </button>
+            </div>
+          )}
+
+          {/* Clear + Go */}
+          <div className="flex gap-3 w-full">
+            <button onClick={() => setStake(0)} disabled={stake === 0 || loading} className="btn-ghost flex-1 text-sm py-2">
+              Clear{stake > 0 ? ` (${stake.toLocaleString()})` : ""}
+            </button>
+            <button onClick={play} disabled={loading || stake <= 0 || stake > balance} className="btn-primary flex-1 text-base py-3">
+              {loading ? "Dealing…" : `⚔️ Go to War · ${stake.toLocaleString()}`}
+            </button>
+          </div>
         </div>
       </div>
     </div>

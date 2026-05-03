@@ -35,6 +35,13 @@ export interface HandState {
   is_blackjack: boolean;
 }
 
+export interface SideBetResult {
+  bet_type: string;
+  stake: number;
+  outcome: string;
+  net_delta: number;
+}
+
 export interface RoundStateResponse {
   round_id: string;
   phase: GamePhase;
@@ -45,4 +52,5 @@ export interface RoundStateResponse {
   legal_actions: PlayerAction[];
   outcomes: Record<string, Outcome> | null;
   net_delta: number | null;
+  side_bet_results: SideBetResult[];
 }

@@ -7,16 +7,19 @@ from app.api.schemas.blackjack import (
     ActionRequest,
     HandStateResponse,
     RoundStateResponse,
+    SideBetResultResponse,
     StartRoundRequest,
 )
 from app.core.games.blackjack.engine import InvalidActionError
 from app.core.games.blackjack.hand import BlackjackHand
-from app.core.games.blackjack.state import BlackjackState
+from app.core.games.blackjack.side_bets import SideBetResult
+from app.core.games.blackjack.state import BlackjackState, GamePhase
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.blackjack_service import BlackjackService, RoundNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 
 router = APIRouter(prefix="/blackjack", tags=["blackjack"])
+
 
 def get_blackjack_service(
     wallet: Annotated[WalletService, Depends(get_wallet_service)],
@@ -35,8 +38,21 @@ def _hand_to_response(hand: BlackjackHand, hide_hole: bool = False) -> HandState
     )
 
 
-def _state_to_response(round_id: str, state: BlackjackState, hide_hole: bool = False) -> RoundStateResponse:
-    from app.core.games.blackjack.state import GamePhase
+def _sb_to_response(sb: SideBetResult) -> SideBetResultResponse:
+    return SideBetResultResponse(
+        bet_type=sb.bet_type,
+        stake=sb.stake,
+        outcome=sb.outcome,
+        net_delta=sb.net_delta,
+    )
+
+
+def _state_to_response(
+    round_id: str,
+    state: BlackjackState,
+    side_bets: list[SideBetResult],
+    hide_hole: bool = False,
+) -> RoundStateResponse:
     outcomes = None
     if state.outcomes is not None:
         outcomes = {str(k): v for k, v in state.outcomes.items()}
@@ -51,6 +67,7 @@ def _state_to_response(round_id: str, state: BlackjackState, hide_hole: bool = F
         legal_actions=state.available_actions,
         outcomes=outcomes,
         net_delta=state.net_delta,
+        side_bet_results=[_sb_to_response(sb) for sb in side_bets],
     )
 
 
@@ -60,12 +77,14 @@ async def start_round(
     svc: Annotated[BlackjackService, Depends(get_blackjack_service)],
 ) -> RoundStateResponse:
     try:
-        round_id, state = await svc.start_round(body.player_id, body.bet)
+        round_id, state, side_bets = await svc.start_round(
+            body.player_id, body.bet, body.perfect_pairs, body.twenty_one_three
+        )
     except PlayerNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except InsufficientFundsError as e:
         raise HTTPException(status_code=402, detail=str(e))
-    return _state_to_response(round_id, state, hide_hole=True)
+    return _state_to_response(round_id, state, side_bets, hide_hole=True)
 
 
 @router.post("/rounds/{round_id}/action", response_model=RoundStateResponse)
@@ -80,9 +99,11 @@ async def apply_action(
         raise HTTPException(status_code=404, detail=str(e))
     except InvalidActionError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    from app.core.games.blackjack.state import GamePhase
+    except InsufficientFundsError as e:
+        raise HTTPException(status_code=402, detail=str(e))
+    side_bets = svc.get_side_bet_results(round_id)
     hide = state.phase == GamePhase.PLAYER_TURN
-    return _state_to_response(round_id, state, hide_hole=hide)
+    return _state_to_response(round_id, state, side_bets, hide_hole=hide)
 
 
 @router.get("/rounds/{round_id}", response_model=RoundStateResponse)
@@ -92,8 +113,8 @@ async def get_round(
 ) -> RoundStateResponse:
     try:
         state = svc.get_state(round_id)
+        side_bets = svc.get_side_bet_results(round_id)
     except RoundNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    from app.core.games.blackjack.state import GamePhase
     hide = state.phase == GamePhase.PLAYER_TURN
-    return _state_to_response(round_id, state, hide_hole=hide)
+    return _state_to_response(round_id, state, side_bets, hide_hole=hide)
