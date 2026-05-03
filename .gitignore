@@ -1,0 +1,12 @@
+.claude/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+*.db
+node_modules/
+dist/
+.env
+.venv/
+*.egg-info/
+.DS_Store

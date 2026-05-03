@@ -1,0 +1,45 @@
+from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config.settings import get_settings
+from app.logging_config import setup_logging
+from app.persistence.database import init_db
+from app.api.routes import health, players, blackjack, roulette, baccarat, slots, war, poker
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    settings = get_settings()
+    setup_logging(debug=settings.debug)
+    await init_db()
+    yield
+
+
+def create_app() -> FastAPI:
+    settings = get_settings()
+    app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(health.router, prefix="/api/v1")
+    app.include_router(players.router, prefix="/api/v1")
+    app.include_router(blackjack.router, prefix="/api/v1")
+    app.include_router(roulette.router, prefix="/api/v1")
+    app.include_router(baccarat.router, prefix="/api/v1")
+    app.include_router(slots.router, prefix="/api/v1")
+    app.include_router(war.router, prefix="/api/v1")
+    app.include_router(poker.router, prefix="/api/v1")
+
+    return app
+
+
+app = create_app()
