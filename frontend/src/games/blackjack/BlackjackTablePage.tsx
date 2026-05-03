@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSessionStore } from "@/store/sessionStore";
 import { usePlayerBalance } from "@/hooks/usePlayer";
+import { useSound } from "@/hooks/useSound";
 import { useBlackjack } from "@/hooks/useBlackjack";
 import { BetControl } from "@/components/casino/BetControl";
 import { Hand } from "@/components/cards/Hand";
@@ -20,13 +21,22 @@ const OUTCOME_MESSAGES: Record<string, { text: string; color: string }> = {
 
 export default function BlackjackTablePage() {
   const navigate = useNavigate();
-  const { currentPlayerId, currentPlayerName } = useSessionStore();
+  const { currentPlayerId, currentPlayerName, recordRound } = useSessionStore();
   const { data: balanceData } = usePlayerBalance(currentPlayerId);
+  const { cardDeal, win, lose } = useSound();
   const [bet, setBet] = useState(0);
   const [actionBadge, setActionBadge] = useState<string | null>(null);
   const badgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { state, startRound, sendAction, isLoading } = useBlackjack(currentPlayerId ?? "");
+
+  useEffect(() => {
+    if (state?.phase === "SETTLED" && state.net_delta != null) {
+      recordRound("Blackjack", state.net_delta);
+      state.net_delta > 0 ? win() : lose();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.phase]);
 
   if (!currentPlayerId) { navigate("/"); return null; }
 
@@ -49,6 +59,7 @@ export default function BlackjackTablePage() {
 
   function handleDeal() {
     if (bet <= 0) return;
+    cardDeal();
     startRound.mutate(bet);
     setBet(0);
   }

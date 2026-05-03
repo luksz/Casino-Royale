@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSessionStore } from "@/store/sessionStore";
 import { usePlayerBalance } from "@/hooks/usePlayer";
+import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
 import { BetInput } from "@/components/casino/BetInput";
 
@@ -39,8 +40,9 @@ function Reel({ symbol, spinning, delay }: { symbol: string; spinning: boolean; 
 
 export default function SlotsPage() {
   const navigate = useNavigate();
-  const { currentPlayerId } = useSessionStore();
+  const { currentPlayerId, recordRound } = useSessionStore();
   const { data: balanceData, refetch } = usePlayerBalance(currentPlayerId);
+  const { win, lose, spin: spinSfx } = useSound();
   const [stake, setStake] = useState(10);
   const [result, setResult] = useState<SlotResult | null>(null);
   const [spinning, setSpinning] = useState(false);
@@ -54,13 +56,15 @@ export default function SlotsPage() {
     if (spinning) return;
     setSpinning(true);
     setResult(null);
+    spinSfx();
     try {
       const res = await apiPost<SlotResult>("/slots/spin", { player_id: currentPlayerId, stake });
-      // Wait for all three reels to finish animating (last reel stops at ~1.2 + 0.3 = 1.5s)
       await new Promise(r => setTimeout(r, 1800));
       setDisplayReels(res.reels);
       setResult(res);
       refetch();
+      recordRound("Slots", res.net_delta);
+      res.won ? win() : lose();
     } finally {
       setSpinning(false);
     }

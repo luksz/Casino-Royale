@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSessionStore } from "@/store/sessionStore";
 import { usePlayerBalance } from "@/hooks/usePlayer";
+import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
 import { PlayingCard } from "@/components/cards/PlayingCard";
 import { BetInput } from "@/components/casino/BetInput";
@@ -26,8 +27,9 @@ const RESULT_MSGS: Record<string, { text: string; color: string }> = {
 
 export default function WarPage() {
   const navigate = useNavigate();
-  const { currentPlayerId } = useSessionStore();
+  const { currentPlayerId, recordRound } = useSessionStore();
   const { data: balanceData, refetch } = usePlayerBalance(currentPlayerId);
+  const { cardDeal, win, lose } = useSound();
   const [stake, setStake] = useState(25);
   const [result, setResult] = useState<WarResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -45,10 +47,13 @@ export default function WarPage() {
   async function play() {
     setLoading(true);
     setResult(null);
+    cardDeal();
     try {
       const res = await apiPost<WarResult>("/war/play", { player_id: currentPlayerId, stake });
       setResult(res);
       refetch();
+      recordRound("War", res.net_delta);
+      res.net_delta > 0 ? win() : lose();
     } finally {
       setLoading(false);
     }

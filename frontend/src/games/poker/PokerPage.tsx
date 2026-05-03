@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSessionStore } from "@/store/sessionStore";
 import { usePlayerBalance } from "@/hooks/usePlayer";
+import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
 import { PlayingCard } from "@/components/cards/PlayingCard";
 import { BetInput } from "@/components/casino/BetInput";
@@ -28,8 +29,9 @@ const WINNER_MSG: Record<string, { text: string; color: string }> = {
 
 export default function PokerPage() {
   const navigate = useNavigate();
-  const { currentPlayerId } = useSessionStore();
+  const { currentPlayerId, recordRound } = useSessionStore();
   const { data: balanceData, refetch } = usePlayerBalance(currentPlayerId);
+  const { cardDeal, win, lose } = useSound();
   const [stake, setStake] = useState(50);
   const [state, setState] = useState<PokerState | null>(null);
   const [discards, setDiscards] = useState<Set<number>>(new Set());
@@ -46,6 +48,7 @@ export default function PokerPage() {
     setLoading(true);
     setState(null);
     setDiscards(new Set());
+    cardDeal();
     try {
       const res = await apiPost<PokerState>("/poker/rounds", { player_id: currentPlayerId, stake });
       setState(res);
@@ -58,11 +61,16 @@ export default function PokerPage() {
   async function draw() {
     if (!state || loading) return;
     setLoading(true);
+    cardDeal();
     try {
       const res = await apiPost<PokerState>(`/poker/rounds/${state.round_id}/draw`, { discard_indices: [...discards] });
       setState(res);
       setDiscards(new Set());
       refetch();
+      if (res.phase === "SETTLED") {
+        recordRound("Poker", res.net_delta);
+        res.net_delta > 0 ? win() : lose();
+      }
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSessionStore } from "@/store/sessionStore";
 import { usePlayerBalance } from "@/hooks/usePlayer";
+import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
 import { PlayingCard } from "@/components/cards/PlayingCard";
 import { BetInput } from "@/components/casino/BetInput";
@@ -31,8 +32,9 @@ function bankerDealIndex(i: number) { return i * 2 + 1; }
 
 export default function BaccaratPage() {
   const navigate = useNavigate();
-  const { currentPlayerId } = useSessionStore();
+  const { currentPlayerId, recordRound } = useSessionStore();
   const { data: balanceData, refetch } = usePlayerBalance(currentPlayerId);
+  const { cardDeal, win, lose } = useSound();
   const [selectedBet, setSelectedBet] = useState<string | null>(null);
   const [stake, setStake] = useState(50);
   const [result, setResult] = useState<BaccaratResult | null>(null);
@@ -46,6 +48,7 @@ export default function BaccaratPage() {
     if (!selectedBet || loading) return;
     setLoading(true);
     setResult(null);
+    cardDeal();
     try {
       const res = await apiPost<BaccaratResult>("/baccarat/play", {
         player_id: currentPlayerId,
@@ -54,6 +57,8 @@ export default function BaccaratPage() {
       });
       setResult(res);
       refetch();
+      recordRound("Baccarat", res.net_delta);
+      res.net_delta > 0 ? win() : lose();
     } finally {
       setLoading(false);
     }

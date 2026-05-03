@@ -48,7 +48,7 @@ export function PlayingCard({
             }
       }
       className={cn(
-        "relative w-16 h-24 rounded-xl shadow-xl select-none flex-shrink-0",
+        "relative w-12 h-[4.5rem] sm:w-16 sm:h-24 rounded-xl shadow-xl select-none flex-shrink-0",
         faceDown
           ? "bg-navy-700 border-2 border-royal-600/60"
           : "bg-white border border-gray-300",
@@ -63,13 +63,13 @@ export function PlayingCard({
         </div>
       ) : (
         <>
-          <span className={cn("absolute top-1.5 left-2 text-sm font-black leading-none", isRed ? "text-red-700" : "text-black")}>
+          <span className={cn("absolute top-1 left-1.5 text-[10px] sm:text-sm font-black leading-none", isRed ? "text-red-700" : "text-black")}>
             {rank}<br />{sym}
           </span>
-          <span className={cn("absolute bottom-1.5 right-2 text-sm font-black leading-none rotate-180", isRed ? "text-red-700" : "text-black")}>
+          <span className={cn("absolute bottom-1 right-1.5 text-[10px] sm:text-sm font-black leading-none rotate-180", isRed ? "text-red-700" : "text-black")}>
             {rank}<br />{sym}
           </span>
-          <span className={cn("absolute inset-0 flex items-center justify-center text-4xl font-black", isRed ? "text-red-600" : "text-gray-900")}>
+          <span className={cn("absolute inset-0 flex items-center justify-center text-2xl sm:text-4xl font-black", isRed ? "text-red-600" : "text-gray-900")}>
             {sym}
           </span>
         </>
