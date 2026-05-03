@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const WHEEL_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
 export const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
@@ -41,32 +41,32 @@ interface RouletteWheelProps {
   winningNumber: number | null;
 }
 
-// transformTemplate uses SVG's native rotate(angle cx cy) — avoids CSS transform-origin issues on <g> elements
-const wheelTransform = ({ rotate }: { rotate?: number | string }) =>
-  `rotate(${Number(rotate ?? 0)} ${CX} ${CY})`;
-
-const ballTransform = ({ rotate }: { rotate?: number | string }) =>
-  `rotate(${Number(rotate ?? 0)} ${CX} ${CY})`;
+const SPIN_TRANSITION = { duration: 4.5, ease: [0.12, 0.9, 0.38, 1] as [number, number, number, number] };
+const BALL_TRANSITION = { duration: 4.5, ease: [0.08, 0.85, 0.3, 1] as [number, number, number, number] };
+const INSTANT = { duration: 0 };
 
 export function RouletteWheel({ rotation, ballRotation, spinning, winningNumber }: RouletteWheelProps) {
   const ballX = CX + R_TRACK * Math.cos(toRad(-90));
   const ballY = CY + R_TRACK * Math.sin(toRad(-90));
 
   return (
-    <div className="relative flex items-center justify-center select-none">
-      <svg width="300" height="300" viewBox="0 0 300 300">
-        {/* Outer ring */}
+    // Layered divs: each rotates independently via motion.div (HTML transforms are reliable)
+    <div className="relative select-none" style={{ width: 300, height: 300 }}>
+
+      {/* Layer 1 — static background rings */}
+      <svg width="300" height="300" viewBox="0 0 300 300" className="absolute inset-0">
         <circle cx={CX} cy={CY} r={R_OUTER + 10} fill="#0b1530" stroke="#a47d10" strokeWidth="3" />
         <circle cx={CX} cy={CY} r={R_OUTER + 6} fill="none" stroke="#f4c542" strokeWidth="1" strokeDasharray="4 3" />
+      </svg>
 
-        {/* Wheel — uses SVG-native rotate transform to guarantee correct pivot */}
-        <motion.g
-          transformTemplate={wheelTransform}
-          animate={{ rotate: rotation }}
-          transition={spinning
-            ? { duration: 4.5, ease: [0.12, 0.9, 0.38, 1] }
-            : { duration: 0 }}
-        >
+      {/* Layer 2 — rotating wheel (motion.div guarantees correct pivot) */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ transformOrigin: "center" }}
+        animate={{ rotate: rotation }}
+        transition={spinning ? SPIN_TRANSITION : INSTANT}
+      >
+        <svg width="300" height="300" viewBox="0 0 300 300">
           {WHEEL_ORDER.map((n, i) => {
             const fill = n === 0 ? "#15803d" : RED_NUMS.has(n) ? "#b91c1c" : "#111118";
             const { x, y, angleDeg } = numberPos(i);
@@ -97,37 +97,45 @@ export function RouletteWheel({ rotation, ballRotation, spinning, winningNumber 
             );
           })}
           <circle cx={CX} cy={CY} r={8} fill="#f4c542" />
-        </motion.g>
+        </svg>
+      </motion.div>
 
-        {/* Ball orbit */}
-        <motion.g
-          transformTemplate={ballTransform}
-          animate={{ rotate: ballRotation }}
-          transition={spinning
-            ? { duration: 4.5, ease: [0.08, 0.85, 0.3, 1] }
-            : { duration: 0 }}
-        >
+      {/* Layer 3 — ball orbiting counter-clockwise */}
+      <motion.div
+        className="absolute inset-0"
+        style={{ transformOrigin: "center" }}
+        animate={{ rotate: ballRotation }}
+        transition={spinning ? BALL_TRANSITION : INSTANT}
+      >
+        <svg width="300" height="300" viewBox="0 0 300 300">
           <circle cx={ballX} cy={ballY} r="5.5" fill="white" stroke="#9ca3af" strokeWidth="1" />
-        </motion.g>
+        </svg>
+      </motion.div>
 
-        {/* Fixed pointer */}
+      {/* Layer 4 — static pointer (always on top) */}
+      <svg width="300" height="300" viewBox="0 0 300 300" className="absolute inset-0 pointer-events-none">
         <polygon
           points={`${CX},${CY - R_OUTER - 5} ${CX - 7},${CY - R_OUTER + 9} ${CX + 7},${CY - R_OUTER + 9}`}
           fill="#f4c542"
         />
       </svg>
 
-      {winningNumber !== null && !spinning && (
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-          className={`absolute bottom-3 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center border-2 border-gold-400 shadow-xl text-white font-black text-xl
-            ${winningNumber === 0 ? "bg-green-700" : RED_NUMS.has(winningNumber) ? "bg-red-600" : "bg-gray-900"}`}
-        >
-          {winningNumber}
-        </motion.div>
-      )}
+      {/* Winning number badge */}
+      <AnimatePresence>
+        {winningNumber !== null && !spinning && (
+          <motion.div
+            key={winningNumber}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+            className={`absolute bottom-3 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center border-2 border-gold-400 shadow-xl text-white font-black text-xl pointer-events-none
+              ${winningNumber === 0 ? "bg-green-700" : RED_NUMS.has(winningNumber) ? "bg-red-600" : "bg-gray-900"}`}
+          >
+            {winningNumber}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

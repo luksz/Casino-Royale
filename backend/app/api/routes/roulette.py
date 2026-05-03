@@ -38,10 +38,11 @@ async def spin(
     bets = [Bet(bet_type=b.bet_type, amount=b.amount, number=b.number) for b in body.bets]
     result = _make_engine().spin(bets)
 
-    if result.net_delta > 0:
-        await wallet.credit(body.player_id, result.net_delta)
-    elif result.net_delta == 0:
-        await wallet.credit(body.player_id, total_bet)
+    # Return stake + profit. net_delta is profit-only (positive = won, negative = lost).
+    # Stake was already debited above, so credit back whatever the player keeps.
+    return_amount = total_bet + result.net_delta
+    if return_amount > 0:
+        await wallet.credit(body.player_id, return_amount)
 
     new_balance = await wallet.get_balance(body.player_id)
     return SpinResponse(
