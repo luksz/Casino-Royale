@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config.settings import get_settings
 from app.logging_config import setup_logging
 from app.persistence.database import init_db
-from app.api.routes import health, players, blackjack, roulette, baccarat, slots, war, poker
+from app.api.routes import health, players, blackjack, roulette, baccarat, slots, war, poker, dice, hilo, keno
 
 
 @asynccontextmanager
@@ -38,6 +38,9 @@ def create_app() -> FastAPI:
     app.include_router(slots.router, prefix="/api/v1")
     app.include_router(war.router, prefix="/api/v1")
     app.include_router(poker.router, prefix="/api/v1")
+    app.include_router(dice.router, prefix="/api/v1")
+    app.include_router(hilo.router, prefix="/api/v1")
+    app.include_router(keno.router, prefix="/api/v1")
 
     return app
 

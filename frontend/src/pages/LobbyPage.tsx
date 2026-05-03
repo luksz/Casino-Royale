@@ -3,14 +3,41 @@ import { motion } from "framer-motion";
 import { useSessionStore } from "@/store/sessionStore";
 import { usePlayerBalance } from "@/hooks/usePlayer";
 
-const GAMES = [
-  { id: "blackjack", name: "Blackjack",      description: "Beat the dealer. 3:2 on naturals.",     path: "/games/blackjack", icon: "🃏" },
-  { id: "roulette",  name: "Roulette",        description: "European wheel. 37 numbers, all bets.", path: "/games/roulette",  icon: "🎡" },
-  { id: "baccarat",  name: "Baccarat",        description: "Punto Banco. Player · Banker · Tie.",   path: "/games/baccarat",  icon: "🎴" },
-  { id: "slots",     name: "Slots",           description: "3 reels. Match symbols to win big.",    path: "/games/slots",     icon: "🎰" },
-  { id: "war",       name: "Casino War",      description: "Higher card wins. Ties go to War!",     path: "/games/war",       icon: "⚔️" },
-  { id: "poker",     name: "Five Card Draw",  description: "vs the bot. Discard and draw.",         path: "/games/poker",     icon: "♠️" },
+const CASINO_GAMES = [
+  { id: "blackjack", name: "Blackjack",      description: "Beat the dealer. 3:2 on naturals. Side bets available.", path: "/games/blackjack", icon: "🃏" },
+  { id: "roulette",  name: "Roulette",        description: "European wheel. 37 numbers, all bets.",                   path: "/games/roulette",  icon: "🎡" },
+  { id: "baccarat",  name: "Baccarat",        description: "Punto Banco. Player · Banker · Tie.",                     path: "/games/baccarat",  icon: "🎴" },
+  { id: "war",       name: "Casino War",      description: "Higher card wins. Ties go to War!",                       path: "/games/war",       icon: "⚔️" },
+  { id: "poker",     name: "Five Card Draw",  description: "vs the bot. Discard and draw.",                           path: "/games/poker",     icon: "♠️" },
 ];
+
+const QUICK_GAMES = [
+  { id: "slots", name: "Slots",  description: "3 reels. Match symbols to win big.",          path: "/games/slots", icon: "🎰" },
+  { id: "dice",  name: "Dice",   description: "Roll two dice. High, Low, Seven or Double.",  path: "/games/dice",  icon: "🎲" },
+  { id: "hilo",  name: "Hi-Lo",  description: "Higher or lower? Build your multiplier.",     path: "/games/hilo",  icon: "🃏" },
+  { id: "keno",  name: "Keno",   description: "Pick up to 10 numbers. 20 drawn from 80.",    path: "/games/keno",  icon: "🔢" },
+];
+
+function GameCard({ game, delay }: { game: typeof CASINO_GAMES[0]; delay: number }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}>
+      <Link to={game.path} className="block card-surface p-5 hover:border-royal-500/50 transition-all duration-200 group hover:bg-navy-700/40 h-full">
+        <div className="flex items-start gap-3">
+          <span className="text-3xl">{game.icon}</span>
+          <div className="flex-1">
+            <h3 className="font-display text-lg text-gold-400 group-hover:text-gold-300 transition-colors leading-tight">{game.name}</h3>
+            <p className="text-ivory/40 text-xs mt-1">{game.description}</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <span className="inline-block bg-royal-600/80 group-hover:bg-royal-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+            Play Now
+          </span>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
 
 export default function LobbyPage() {
   const { currentPlayerId, currentPlayerName, clearPlayer, history } = useSessionStore();
@@ -32,9 +59,7 @@ export default function LobbyPage() {
         <div className="flex items-center gap-6">
           <div className="text-right">
             <p className="text-ivory/30 text-xs">Balance</p>
-            <p className="text-gold-400 font-semibold text-lg tabular-nums">
-              {balance.toLocaleString()} chips
-            </p>
+            <p className="text-gold-400 font-semibold text-lg tabular-nums">{balance.toLocaleString()} chips</p>
           </div>
           <div className="text-right">
             <p className="text-ivory/30 text-xs">Player</p>
@@ -72,20 +97,13 @@ export default function LobbyPage() {
               </p>
             </div>
           </div>
-
-          {/* History list */}
           <div className="mt-3 flex flex-wrap gap-1.5">
             {history.slice(0, 10).map((r, i) => (
-              <span
-                key={i}
-                className={`text-xs px-2 py-0.5 rounded-full border font-semibold tabular-nums ${
-                  r.netDelta > 0
-                    ? "border-green-500/40 bg-green-500/10 text-green-400"
-                    : r.netDelta < 0
-                    ? "border-red-500/40 bg-red-500/10 text-red-400"
-                    : "border-navy-600 text-ivory/40"
-                }`}
-              >
+              <span key={i} className={`text-xs px-2 py-0.5 rounded-full border font-semibold tabular-nums ${
+                r.netDelta > 0 ? "border-green-500/40 bg-green-500/10 text-green-400"
+                : r.netDelta < 0 ? "border-red-500/40 bg-red-500/10 text-red-400"
+                : "border-navy-600 text-ivory/40"
+              }`}>
                 {r.game} {r.netDelta > 0 ? "+" : ""}{r.netDelta}
               </span>
             ))}
@@ -93,27 +111,16 @@ export default function LobbyPage() {
         </motion.div>
       )}
 
-      <p className="text-ivory/30 uppercase text-xs tracking-widest mb-5">Choose your game</p>
+      {/* Casino Games */}
+      <p className="text-ivory/30 uppercase text-xs tracking-widest mb-4">Casino Games</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        {CASINO_GAMES.map((game, i) => <GameCard key={game.id} game={game} delay={i * 0.06} />)}
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {GAMES.map((game, i) => (
-          <motion.div key={game.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-            <Link to={game.path} className="block card-surface p-5 hover:border-royal-500/50 transition-all duration-200 group hover:bg-navy-700/40 h-full">
-              <div className="flex items-start gap-3">
-                <span className="text-3xl">{game.icon}</span>
-                <div className="flex-1">
-                  <h3 className="font-display text-lg text-gold-400 group-hover:text-gold-300 transition-colors leading-tight">{game.name}</h3>
-                  <p className="text-ivory/40 text-xs mt-1">{game.description}</p>
-                </div>
-              </div>
-              <div className="mt-4">
-                <span className="inline-block bg-royal-600/80 group-hover:bg-royal-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                  Play Now
-                </span>
-              </div>
-            </Link>
-          </motion.div>
-        ))}
+      {/* Quick Games */}
+      <p className="text-ivory/30 uppercase text-xs tracking-widest mb-4">Games</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {QUICK_GAMES.map((game, i) => <GameCard key={game.id} game={game} delay={0.3 + i * 0.06} />)}
       </div>
     </div>
   );

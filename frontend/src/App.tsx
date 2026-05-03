@@ -7,6 +7,9 @@ import BaccaratPage from "@/games/baccarat/BaccaratPage";
 import SlotsPage from "@/games/slots/SlotsPage";
 import WarPage from "@/games/war/WarPage";
 import PokerPage from "@/games/poker/PokerPage";
+import DicePage from "@/games/dice/DicePage";
+import HiLoPage from "@/games/hilo/HiLoPage";
+import KenoPage from "@/games/keno/KenoPage";
 
 export default function App() {
   return (
@@ -19,6 +22,9 @@ export default function App() {
       <Route path="/games/slots"     element={<SlotsPage />} />
       <Route path="/games/war"       element={<WarPage />} />
       <Route path="/games/poker"     element={<PokerPage />} />
+      <Route path="/games/dice"      element={<DicePage />} />
+      <Route path="/games/hilo"      element={<HiLoPage />} />
+      <Route path="/games/keno"      element={<KenoPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
