@@ -159,6 +159,7 @@ export default function BlackjackTablePage() {
                   bet={bet}
                   onAdd={(v) => setBet((b) => b + v)}
                   onClear={() => setBet(0)}
+                  onAllIn={() => setBet(balance)}
                   disabled={isLoading}
                   maxBet={balance}
                 />
