@@ -7,7 +7,7 @@ const N = 37;
 const SECTOR_DEG = 360 / N;
 const CX = 150, CY = 150;
 const R_OUTER = 132, R_INNER = 84, R_TEXT = 112;
-const R_TRACK = 145; // ball orbit track
+const R_TRACK = 145;
 
 function toRad(deg: number) { return (deg * Math.PI) / 180; }
 
@@ -26,7 +26,6 @@ function numberPos(i: number) {
   return { x: CX + R_TEXT * Math.cos(a), y: CY + R_TEXT * Math.sin(a), angleDeg: i * SECTOR_DEG + SECTOR_DEG / 2 };
 }
 
-/** Returns the clockwise rotation to land winning number at the top pointer. */
 export function calcWheelRotation(prev: number, winningNumber: number): number {
   const idx = WHEEL_ORDER.indexOf(winningNumber);
   const sectorCenter = (idx * SECTOR_DEG + SECTOR_DEG / 2) % 360;
@@ -42,20 +41,27 @@ interface RouletteWheelProps {
   winningNumber: number | null;
 }
 
+// transformTemplate uses SVG's native rotate(angle cx cy) — avoids CSS transform-origin issues on <g> elements
+const wheelTransform = ({ rotate }: { rotate?: number | string }) =>
+  `rotate(${Number(rotate ?? 0)} ${CX} ${CY})`;
+
+const ballTransform = ({ rotate }: { rotate?: number | string }) =>
+  `rotate(${Number(rotate ?? 0)} ${CX} ${CY})`;
+
 export function RouletteWheel({ rotation, ballRotation, spinning, winningNumber }: RouletteWheelProps) {
-  const ballX = CX + R_TRACK * Math.cos(toRad(-90)); // resting at top
+  const ballX = CX + R_TRACK * Math.cos(toRad(-90));
   const ballY = CY + R_TRACK * Math.sin(toRad(-90));
 
   return (
     <div className="relative flex items-center justify-center select-none">
       <svg width="300" height="300" viewBox="0 0 300 300">
-        {/* Outer decorative ring */}
+        {/* Outer ring */}
         <circle cx={CX} cy={CY} r={R_OUTER + 10} fill="#0b1530" stroke="#a47d10" strokeWidth="3" />
         <circle cx={CX} cy={CY} r={R_OUTER + 6} fill="none" stroke="#f4c542" strokeWidth="1" strokeDasharray="4 3" />
 
-        {/* Rotating wheel group */}
+        {/* Wheel — uses SVG-native rotate transform to guarantee correct pivot */}
         <motion.g
-          style={{ transformOrigin: `${CX}px ${CY}px` }}
+          transformTemplate={wheelTransform}
           animate={{ rotate: rotation }}
           transition={spinning
             ? { duration: 4.5, ease: [0.12, 0.9, 0.38, 1] }
@@ -78,10 +84,8 @@ export function RouletteWheel({ rotation, ballRotation, spinning, winningNumber 
               </g>
             );
           })}
-          {/* Inner hub */}
           <circle cx={CX} cy={CY} r={R_INNER - 2} fill="#060d1f" stroke="#f4c542" strokeWidth="2" />
           <circle cx={CX} cy={CY} r={28} fill="#0b1530" stroke="#a47d10" strokeWidth="1.5" />
-          {/* Hub spokes */}
           {[0, 60, 120, 180, 240, 300].map(a => {
             const ra = toRad(a);
             return (
@@ -95,25 +99,24 @@ export function RouletteWheel({ rotation, ballRotation, spinning, winningNumber 
           <circle cx={CX} cy={CY} r={8} fill="#f4c542" />
         </motion.g>
 
-        {/* Ball orbit (counter-rotates relative to wheel) */}
+        {/* Ball orbit */}
         <motion.g
-          style={{ transformOrigin: `${CX}px ${CY}px` }}
+          transformTemplate={ballTransform}
           animate={{ rotate: ballRotation }}
           transition={spinning
             ? { duration: 4.5, ease: [0.08, 0.85, 0.3, 1] }
             : { duration: 0 }}
         >
-          <circle cx={ballX} cy={ballY} r="5" fill="white" stroke="#d1d5db" strokeWidth="1" opacity="0.95" />
+          <circle cx={ballX} cy={ballY} r="5.5" fill="white" stroke="#9ca3af" strokeWidth="1" />
         </motion.g>
 
-        {/* Fixed pointer at top */}
+        {/* Fixed pointer */}
         <polygon
           points={`${CX},${CY - R_OUTER - 5} ${CX - 7},${CY - R_OUTER + 9} ${CX + 7},${CY - R_OUTER + 9}`}
           fill="#f4c542"
         />
       </svg>
 
-      {/* Winning number badge */}
       {winningNumber !== null && !spinning && (
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
