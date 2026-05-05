@@ -1,6 +1,6 @@
 # Casino Royale
 
-A local-first casino web app with ten fully playable games. Backend in Python (FastAPI), frontend in React + TypeScript. Each game is a pure, tested engine with a thin API and animated UI on top.
+A local-first casino web app with eleven fully playable games. Backend in Python (FastAPI), frontend in React + TypeScript. Each game is a pure, tested engine with a thin API and animated UI on top.
 
 ![Casino Royale](https://img.shields.io/badge/status-playable-gold) ![Python](https://img.shields.io/badge/python-3.11+-blue) ![React](https://img.shields.io/badge/react-18-blue) ![Tests](https://img.shields.io/badge/tests-42%20passing-green)
 
@@ -27,6 +27,7 @@ A local-first casino web app with ten fully playable games. Backend in Python (F
 | 🃏 **Hi-Lo** | Deal a card, then guess Higher or Lower. Correct guesses multiply your stake — cash out any time. |
 | 🔢 **Keno** | Pick 1–10 numbers. Choose how many are drawn (5–40) from a pool of 80. Dynamic payouts via hypergeometric odds with 25% house edge. |
 | 🎱 **Toto** | Lottery-style. Pick 6 from 49. Draw 6 main numbers + 1 bonus. Seven prize tiers from 45:1 (3 matches) up to 49,999:1 jackpot. Quick Pick supported. |
+| 🎳 **Pachinko** | Drop balls through a peg board (Plinko-style). Choose 8/12/16 rows and Low/Medium/High risk. Multipliers up to 1000× on high risk. 1–5 balls per drop, animated slot-by-slot. |
 
 ---
 
@@ -82,7 +83,7 @@ Casino Royale/
 │   │   ├── core/              # Pure game engines — no framework imports
 │   │   │   ├── cards/         # Card, Suit, Rank, Shoe
 │   │   │   ├── rng/           # Seedable RNG (SeededRNG / SecureRNG)
-│   │   │   └── games/         # blackjack, roulette, baccarat, slots, war, poker, dice, hilo, keno, toto
+│   │   │   └── games/         # blackjack, roulette, baccarat, slots, war, poker, dice, hilo, keno, toto, pachinko
 │   │   ├── api/               # FastAPI routes + Pydantic schemas
 │   │   ├── services/          # Wallet, Player, game session orchestration
 │   │   ├── persistence/       # SQLAlchemy models + repositories
