@@ -8,15 +8,15 @@ if TYPE_CHECKING:
 POOL_SIZE = 49
 PICK_COUNT = 6
 
-# (main_matches, bonus_hit) → return multiplier (0=lose, >1=win)
+# (main_matches, bonus_hit) → total return multiplier (net_delta = stake * (mult - 1))
 PRIZE_TIERS: dict[tuple[int, bool], int] = {
-    (6, False): 50_000,   # Jackpot
-    (5, True):  50_000,   # Group 2: 5 main + bonus
-    (5, False): 40_000,   # Group 3: 5 main
-    (4, True):  16_000,   # Group 4: 4 main + bonus
-    (4, False):    800,   # Group 5: 4 main
-    (3, True):     600,   # Group 6: 3 main + bonus
-    (3, False):     46,   # Group 7: 3 main
+    (6, False): 50_000,   # Group 1 – Jackpot
+    (5, True):  10_000,   # Group 2
+    (5, False):  1_000,   # Group 3
+    (4, True):     200,   # Group 4
+    (4, False):     50,   # Group 5
+    (3, True):      25,   # Group 6
+    (3, False):     10,   # Group 7
 }
 
 

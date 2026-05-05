@@ -28,12 +28,12 @@ const ALL_NUMBERS = Array.from({ length: 49 }, (_, i) => i + 1);
 
 const PRIZE_TABLE = [
   { label: "Group 1 – Jackpot", desc: "6 numbers",            mult: 50_000 },
-  { label: "Group 2",           desc: "5 numbers + bonus",    mult: 50_000 },
-  { label: "Group 3",           desc: "5 numbers",            mult: 40_000 },
-  { label: "Group 4",           desc: "4 numbers + bonus",    mult: 16_000 },
-  { label: "Group 5",           desc: "4 numbers",            mult:    800 },
-  { label: "Group 6",           desc: "3 numbers + bonus",    mult:    600 },
-  { label: "Group 7",           desc: "3 numbers",            mult:     46 },
+  { label: "Group 2",           desc: "5 numbers + bonus",    mult: 10_000 },
+  { label: "Group 3",           desc: "5 numbers",            mult:  1_000 },
+  { label: "Group 4",           desc: "4 numbers + bonus",    mult:    200 },
+  { label: "Group 5",           desc: "4 numbers",            mult:     50 },
+  { label: "Group 6",           desc: "3 numbers + bonus",    mult:     25 },
+  { label: "Group 7",           desc: "3 numbers",            mult:     10 },
 ];
 
 // Ball colours cycle through cheerful lottery colours
@@ -267,7 +267,7 @@ export default function TotoPage() {
                   <p className="text-ivory/50 text-sm mt-1">
                     {result.num_main_matches} main match{result.num_main_matches !== 1 ? "es" : ""}
                     {result.bonus_hit && " + bonus"}
-                    {" · "}{(result.return_multiplier - 1).toLocaleString()}:1
+                    {" · "}{result.return_multiplier >= 1000 ? `${(result.return_multiplier / 1000).toLocaleString()}k×` : `${result.return_multiplier}×`}
                   </p>
                   <p className="text-green-400 text-xl font-semibold mt-1">
                     +{result.net_delta.toLocaleString()} chips
@@ -301,7 +301,7 @@ export default function TotoPage() {
                   <span className="text-xs text-ivory/30 ml-2">{desc}</span>
                 </div>
                 <span className="text-xs font-bold text-gold-400 tabular-nums">
-                  {(mult - 1).toLocaleString()}:1
+                  {mult >= 1000 ? `${(mult / 1000).toLocaleString()}k×` : `${mult}×`}
                 </span>
               </div>
             ))}
