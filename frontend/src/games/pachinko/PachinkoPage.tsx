@@ -35,6 +35,25 @@ const TOP_PAD = 20;
 
 const ROW_HEIGHTS: Record<number, number> = { 8: 44, 12: 36, 16: 28 };
 
+// Mirror of backend PAYOUTS table — drives board display independently of API result
+const PAYOUTS: Record<number, Record<string, number[]>> = {
+  8: {
+    low:    [5.6, 2.1, 1.1, 1.0, 0.5, 1.0, 1.1, 2.1, 5.6],
+    medium: [13., 3.0, 1.3, 0.7, 0.4, 0.7, 1.3, 3.0, 13.],
+    high:   [29., 4.0, 1.5, 0.3, 0.2, 0.3, 1.5, 4.0, 29.],
+  },
+  12: {
+    low:    [5.6, 2.0, 1.6, 1.4, 1.1, 1.0, 0.5, 1.0, 1.1, 1.4, 1.6, 2.0, 5.6],
+    medium: [33., 11., 4.0, 2.0, 1.1, 0.6, 0.3, 0.6, 1.1, 2.0, 4.0, 11., 33.],
+    high:   [170., 24., 8.1, 2.0, 0.7, 0.2, 0.2, 0.2, 0.7, 2.0, 8.1, 24., 170.],
+  },
+  16: {
+    low:    [5.6, 2.0, 1.4, 1.4, 1.2, 1.1, 1.0, 0.7, 0.5, 0.7, 1.0, 1.1, 1.2, 1.4, 1.4, 2.0, 5.6],
+    medium: [110., 41., 10., 5.0, 3.0, 1.5, 1.0, 0.5, 0.3, 0.5, 1.0, 1.5, 3.0, 5.0, 10., 41., 110.],
+    high:   [1000., 130., 26., 9.0, 4.0, 2.0, 0.2, 0.2, 0.2, 0.2, 0.2, 2.0, 4.0, 9.0, 26., 130., 1000.],
+  },
+};
+
 function slotColor(mult: number): string {
   if (mult >= 50)  return "#22c55e";
   if (mult >= 10)  return "#4ade80";
@@ -78,14 +97,17 @@ function PachinkoBoard({
   dropping: boolean;
 }) {
   const rowH = ROW_HEIGHTS[rows];
-  const slotW = BOARD_W / (rows + 1);
+  // slotW derives from payouts.length so pegs and slots always share the same grid
+  const numSlots = payouts.length > 0 ? payouts.length : rows + 1;
+  const slotW = BOARD_W / numSlots;
   const boardH = TOP_PAD + rows * rowH + rowH + SLOT_H + 8;
 
   return (
     <svg
       viewBox={`0 0 ${BOARD_W} ${boardH}`}
-      width="100%"
-      style={{ display: "block" }}
+      width={BOARD_W}
+      height={boardH}
+      style={{ width: "100%", height: "auto", display: "block" }}
     >
       {/* Background */}
       <rect width={BOARD_W} height={boardH} fill="#0f172a" rx={8} />
@@ -192,7 +214,7 @@ export default function PachinkoPage() {
 
   const rowH = ROW_HEIGHTS[rows];
   const slotW = BOARD_W / (rows + 1);
-  const payouts = result?.payouts ?? [];
+  const payouts = PAYOUTS[rows][risk];
 
   // Compute current ball display position
   const currentBall = result?.balls[animBallIdx];
@@ -282,7 +304,7 @@ export default function PachinkoPage() {
             <span className="text-ivory/30 text-xs uppercase tracking-widest">Rows</span>
             <div className="flex gap-1.5">
               {([8, 12, 16] as const).map(r => (
-                <button key={r} onClick={() => { if (!dropping) setRows(r); }}
+                <button key={r} onClick={() => { if (!dropping) { setRows(r); setResult(null); setLitSlot(null); } }}
                   className={cn("px-3 py-1.5 rounded-lg text-sm font-bold border transition-all",
                     rows === r ? "bg-royal-600 border-royal-400 text-white" : "bg-navy-800/60 border-navy-600 text-ivory/50 hover:text-ivory")}>
                   {r}
@@ -296,7 +318,7 @@ export default function PachinkoPage() {
             <span className="text-ivory/30 text-xs uppercase tracking-widest">Risk</span>
             <div className="flex gap-1.5">
               {(["low", "medium", "high"] as const).map(r => (
-                <button key={r} onClick={() => { if (!dropping) setRisk(r); }}
+                <button key={r} onClick={() => { if (!dropping) { setRisk(r); setResult(null); setLitSlot(null); } }}
                   className={cn("px-3 py-1.5 rounded-lg text-sm font-bold border transition-all capitalize",
                     risk === r
                       ? r === "high" ? "bg-red-700 border-red-500 text-white"
