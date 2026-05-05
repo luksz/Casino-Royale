@@ -200,9 +200,9 @@ export default function PachinkoPage() {
   const [lastStake, setLastStake] = useState(0);
 
   const [result, setResult] = useState<DropResponse | null>(null);
-  const [dropping, setDropping] = useState(false);
+  const [requesting, setRequesting] = useState(false);  // API in-flight (blocks button)
 
-  // Animation state
+  // Animation state — independent of requesting; can be interrupted by new drop
   const [animBallIdx, setAnimBallIdx] = useState(-1);
   const [animStep, setAnimStep] = useState(0);
   const [litSlot, setLitSlot] = useState<number | null>(null);
@@ -226,46 +226,40 @@ export default function PachinkoPage() {
     : { x: BOARD_W / 2, y: TOP_PAD + rowH / 2 };
   const showBall = animBallIdx >= 0;
 
-  // Drive animation frame by frame
+  // Drive animation frame by frame — interrupted whenever result changes (new drop)
   useEffect(() => {
     if (animBallIdx < 0 || !result) return;
 
     if (animStep <= rows) {
       animRef.current = setTimeout(() => {
         setAnimStep(s => s + 1);
-        if (animStep === rows && currentBall) {
-          setLitSlot(currentBall.slot);
-        }
-      }, 140);
+        if (animStep === rows && currentBall) setLitSlot(currentBall.slot);
+      }, 100);
     } else {
-      // Ball settled — pause then advance or finish
       animRef.current = setTimeout(() => {
         if (animBallIdx + 1 < result.balls.length) {
           setLitSlot(null);
           setAnimBallIdx(i => i + 1);
           setAnimStep(0);
         } else {
-          // All balls done
-          setDropping(false);
           setLitSlot(null);
-          refetch();
-          recordRound("Pachinko", result.total_net_delta);
-          result.total_net_delta > 0 ? win() : lose();
         }
-      }, 400);
+      }, 250);
     }
     return () => { if (animRef.current) clearTimeout(animRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animStep, animBallIdx]);
 
   async function dropBalls() {
-    if (stakePerBall <= 0 || dropping) return;
-    setDropping(true);
-    setResult(null);
-    setLitSlot(null);
-    setBallHistory([]);
+    if (stakePerBall <= 0 || requesting || totalStake > balance) return;
+
+    // Cancel any running animation immediately
+    if (animRef.current) clearTimeout(animRef.current);
     setAnimBallIdx(-1);
     setAnimStep(0);
+    setLitSlot(null);
+
+    setRequesting(true);
     setLastStake(stakePerBall);
 
     try {
@@ -280,8 +274,12 @@ export default function PachinkoPage() {
       setBallHistory(res.balls.map(b => ({ mult: b.multiplier, net: b.net_delta })));
       setAnimBallIdx(0);
       setAnimStep(0);
-    } catch {
-      setDropping(false);
+      // Update balance and session immediately when result arrives
+      refetch();
+      recordRound("Pachinko", res.total_net_delta);
+      res.total_net_delta > 0 ? win() : lose();
+    } finally {
+      setRequesting(false);
     }
   }
 
@@ -304,7 +302,7 @@ export default function PachinkoPage() {
             <span className="text-ivory/30 text-xs uppercase tracking-widest">Rows</span>
             <div className="flex gap-1.5">
               {([8, 12, 16] as const).map(r => (
-                <button key={r} onClick={() => { if (!dropping) { setRows(r); setResult(null); setLitSlot(null); } }}
+                <button key={r} onClick={() => { if (!requesting) { setRows(r); setResult(null); setLitSlot(null); } }}
                   className={cn("px-3 py-1.5 rounded-lg text-sm font-bold border transition-all",
                     rows === r ? "bg-royal-600 border-royal-400 text-white" : "bg-navy-800/60 border-navy-600 text-ivory/50 hover:text-ivory")}>
                   {r}
@@ -318,7 +316,7 @@ export default function PachinkoPage() {
             <span className="text-ivory/30 text-xs uppercase tracking-widest">Risk</span>
             <div className="flex gap-1.5">
               {(["low", "medium", "high"] as const).map(r => (
-                <button key={r} onClick={() => { if (!dropping) { setRisk(r); setResult(null); setLitSlot(null); } }}
+                <button key={r} onClick={() => { if (!requesting) { setRisk(r); setResult(null); setLitSlot(null); } }}
                   className={cn("px-3 py-1.5 rounded-lg text-sm font-bold border transition-all capitalize",
                     risk === r
                       ? r === "high" ? "bg-red-700 border-red-500 text-white"
@@ -336,7 +334,7 @@ export default function PachinkoPage() {
             <span className="text-ivory/30 text-xs uppercase tracking-widest">Balls</span>
             <div className="flex gap-1.5">
               {[1, 2, 3, 5].map(n => (
-                <button key={n} onClick={() => { if (!dropping) setNumBalls(n); }}
+                <button key={n} onClick={() => { if (!requesting) setNumBalls(n); }}
                   className={cn("w-9 py-1.5 rounded-lg text-sm font-bold border transition-all",
                     numBalls === n ? "bg-royal-600 border-royal-400 text-white" : "bg-navy-800/60 border-navy-600 text-ivory/50 hover:text-ivory")}>
                   {n}
@@ -355,13 +353,13 @@ export default function PachinkoPage() {
             ballY={ballY}
             showBall={showBall}
             litSlot={litSlot}
-            dropping={dropping}
+            dropping={animBallIdx >= 0}
           />
         </div>
 
         {/* Ball history */}
         <AnimatePresence>
-          {result && !dropping && (
+          {result && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -412,10 +410,10 @@ export default function PachinkoPage() {
 
           <div className="flex gap-2 flex-wrap justify-center">
             {CHIP_VALUES.map(v => (
-              <Chip key={v} value={v} disabled={dropping || stakePerBall + v > balance} onClick={() => setStakePerBall(s => s + v)} />
+              <Chip key={v} value={v} disabled={requesting || stakePerBall + v > balance} onClick={() => setStakePerBall(s => s + v)} />
             ))}
             {balance > 5000 && (
-              <button onClick={() => setStakePerBall(Math.floor(balance / numBalls))} disabled={dropping}
+              <button onClick={() => setStakePerBall(Math.floor(balance / numBalls))} disabled={requesting}
                 className="px-3 h-12 rounded-full font-bold text-xs border-4 transition-all disabled:opacity-30 border-gold-600/40 bg-navy-800 text-gold-500/70 hover:text-gold-400">
                 Max
               </button>
@@ -424,15 +422,15 @@ export default function PachinkoPage() {
 
           {lastStake > 0 && (
             <div className="flex gap-2 w-full">
-              <button onClick={() => setStakePerBall(lastStake)} disabled={dropping || lastStake > balance}
+              <button onClick={() => setStakePerBall(lastStake)} disabled={requesting || lastStake > balance}
                 className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
                 Re-bet <span className="text-ivory/40">({lastStake.toLocaleString()})</span>
               </button>
-              <button onClick={() => setStakePerBall(Math.max(1, Math.floor(lastStake / 2)))} disabled={dropping}
+              <button onClick={() => setStakePerBall(Math.max(1, Math.floor(lastStake / 2)))} disabled={requesting}
                 className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
                 ½ Bet
               </button>
-              <button onClick={() => setStakePerBall(lastStake * 2)} disabled={dropping || lastStake * 2 * numBalls > balance}
+              <button onClick={() => setStakePerBall(lastStake * 2)} disabled={requesting || lastStake * 2 * numBalls > balance}
                 className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
                 ×2 Bet
               </button>
@@ -440,15 +438,15 @@ export default function PachinkoPage() {
           )}
 
           <div className="flex gap-3 w-full">
-            <button onClick={() => setStakePerBall(0)} disabled={stakePerBall === 0 || dropping} className="btn-ghost flex-1 text-sm py-2">
+            <button onClick={() => setStakePerBall(0)} disabled={stakePerBall === 0 || requesting} className="btn-ghost flex-1 text-sm py-2">
               Clear{stakePerBall > 0 ? ` (${stakePerBall.toLocaleString()})` : ""}
             </button>
             <button
               onClick={dropBalls}
-              disabled={stakePerBall <= 0 || dropping || totalStake > balance}
+              disabled={stakePerBall <= 0 || requesting || totalStake > balance}
               className="btn-primary flex-1 text-base py-3"
             >
-              {dropping ? "Dropping…" : `Drop · ${totalStake.toLocaleString()}`}
+              {requesting ? "Dropping…" : `Drop · ${totalStake.toLocaleString()}`}
             </button>
           </div>
         </div>

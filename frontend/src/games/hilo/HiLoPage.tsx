@@ -22,6 +22,23 @@ interface PlayResponse {
 
 const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
 
+function parseRank(code: string): number {
+  const r = code.slice(0, -1);
+  if (r === "A") return 14;
+  if (r === "K") return 13;
+  if (r === "Q") return 12;
+  if (r === "J") return 11;
+  return parseInt(r, 10);
+}
+
+function oddsLabel(code: string | null, action: "HIGHER" | "LOWER"): string {
+  if (!code) return "";
+  const rank = parseRank(code);
+  const favorable = action === "HIGHER" ? 14 - rank : rank - 2;
+  if (favorable <= 0) return "impossible";
+  return ((1 - 0.04) / (favorable / 13)).toFixed(2) + "×";
+}
+
 export default function HiLoPage() {
   const navigate = useNavigate();
   const { currentPlayerId, recordRound } = useSessionStore();
@@ -245,34 +262,22 @@ export default function HiLoPage() {
           ) : phase === "playing" ? (
             <>
               <p className="text-ivory/40 text-xs uppercase tracking-widest">Will the next card be…</p>
-              <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="flex gap-4 w-full">
                 <button
                   onClick={() => play("HIGHER")}
                   disabled={loading}
-                  className="py-4 rounded-xl bg-green-700 hover:bg-green-600 border-2 border-green-500 text-white font-black text-lg transition-all disabled:opacity-50 active:scale-95"
+                  className="flex-1 py-5 rounded-xl bg-green-700 hover:bg-green-600 border-2 border-green-500 text-white font-black text-xl transition-all disabled:opacity-50 active:scale-95 flex flex-col items-center gap-0.5"
                 >
-                  ↑ Higher
-                </button>
-                <button
-                  onClick={() => play("HIGHER_EQ")}
-                  disabled={loading}
-                  className="py-4 rounded-xl bg-green-900 hover:bg-green-800 border-2 border-green-700 text-green-300 font-black text-lg transition-all disabled:opacity-50 active:scale-95"
-                >
-                  ↑ Higher or Same
+                  <span>↑ Higher</span>
+                  <span className="text-green-300 text-sm font-semibold">{oddsLabel(currentCard, "HIGHER")}</span>
                 </button>
                 <button
                   onClick={() => play("LOWER")}
                   disabled={loading}
-                  className="py-4 rounded-xl bg-red-700 hover:bg-red-600 border-2 border-red-500 text-white font-black text-lg transition-all disabled:opacity-50 active:scale-95"
+                  className="flex-1 py-5 rounded-xl bg-red-700 hover:bg-red-600 border-2 border-red-500 text-white font-black text-xl transition-all disabled:opacity-50 active:scale-95 flex flex-col items-center gap-0.5"
                 >
-                  ↓ Lower
-                </button>
-                <button
-                  onClick={() => play("LOWER_EQ")}
-                  disabled={loading}
-                  className="py-4 rounded-xl bg-red-900 hover:bg-red-800 border-2 border-red-700 text-red-300 font-black text-lg transition-all disabled:opacity-50 active:scale-95"
-                >
-                  ↓ Lower or Same
+                  <span>↓ Lower</span>
+                  <span className="text-red-300 text-sm font-semibold">{oddsLabel(currentCard, "LOWER")}</span>
                 </button>
               </div>
               {multiplier > 1 && (
