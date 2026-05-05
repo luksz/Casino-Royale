@@ -11,26 +11,54 @@ import { cn } from "@/lib/utils";
 
 interface KenoResult {
   draws: number[]; picks: number[]; matches: number[];
-  num_matches: number; return_multiplier: number;
+  num_matches: number; draw_count: number; return_multiplier: number;
   net_delta: number; stake: number; new_balance: number;
 }
 
 const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
 const ALL_NUMBERS = Array.from({ length: 80 }, (_, i) => i + 1);
+const DRAW_COUNT_OPTIONS = [5, 10, 15, 20, 25, 30, 40];
+const POOL_SIZE = 80;
 
-// Return multiplier payouts (0=lose, 1=push, >1=win)
-const PAYOUT_TABLE: Record<number, Record<number, number>> = {
-  1:  {1: 3},
-  2:  {2: 15, 1: 2},
-  3:  {3: 46,  2: 3,   1: 1},
-  4:  {4: 92,  3: 7,   2: 2,  1: 1},
-  5:  {5: 700, 4: 23,  3: 4},
-  6:  {6: 1400, 5: 76,  4: 11, 3: 2},
-  7:  {7: 3500, 6: 180, 5: 26, 4: 6,  3: 2},
-  8:  {8: 7000, 7: 700, 6: 90, 5: 18, 4: 4},
-  9:  {9: 12000, 8: 2000, 7: 250, 6: 50, 5: 10, 4: 2},
-  10: {10: 40000, 9: 4000, 8: 600, 7: 100, 6: 20, 5: 4, 4: 2},
-};
+// Mirror of backend hypergeometric PMF for payout table display
+function logComb(n: number, k: number): number {
+  if (k < 0 || k > n) return -Infinity;
+  if (k === 0 || k === n) return 0;
+  let result = 0;
+  const kk = Math.min(k, n - k);
+  for (let i = 0; i < kk; i++) {
+    result += Math.log(n - i) - Math.log(i + 1);
+  }
+  return result;
+}
+
+function hgPmf(k: number, nDraws: number, nPicks: number, pool = POOL_SIZE): number {
+  if (k < 0 || k > Math.min(nDraws, nPicks)) return 0;
+  const nonPicks = pool - nPicks;
+  const nonK = nDraws - k;
+  if (nonK < 0 || nonK > nonPicks) return 0;
+  const logP = logComb(nPicks, k) + logComb(nonPicks, nonK) - logComb(pool, nDraws);
+  if (!isFinite(logP)) return 0;
+  return Math.exp(logP);
+}
+
+function computeReturnMultiplier(nPicks: number, nDraws: number, nMatches: number): number {
+  const p = hgPmf(nMatches, nDraws, nPicks);
+  if (p <= 0) return 0;
+  const raw = 0.75 / p;
+  if (raw < 1.4) return 0;
+  if (raw < 1.9) return 1;
+  return Math.min(Math.round(raw), 50000);
+}
+
+function buildPayoutRow(nPicks: number, drawCount: number): Record<number, number> {
+  const row: Record<number, number> = {};
+  for (let k = nPicks; k >= 0; k--) {
+    const mult = computeReturnMultiplier(nPicks, drawCount, k);
+    if (mult > 0) row[k] = mult;
+  }
+  return row;
+}
 
 function getPayoutLabel(mult: number): string {
   if (mult === 0) return "Lose";
@@ -47,6 +75,7 @@ export default function KenoPage() {
   const [picks, setPicks] = useState<Set<number>>(new Set());
   const [stake, setStake] = useState(0);
   const [lastStake, setLastStake] = useState(0);
+  const [drawCount, setDrawCount] = useState(20);
   const [result, setResult] = useState<KenoResult | null>(null);
   const [drawing, setDrawing] = useState(false);
   const [revealedDraws, setRevealedDraws] = useState<Set<number>>(new Set());
@@ -66,6 +95,13 @@ export default function KenoPage() {
     setRevealedDraws(new Set());
   }
 
+  function changeDrawCount(count: number) {
+    if (drawing) return;
+    setDrawCount(count);
+    setResult(null);
+    setRevealedDraws(new Set());
+  }
+
   async function draw() {
     if (picks.size === 0 || stake <= 0 || drawing) return;
     setDrawing(true);
@@ -77,8 +113,8 @@ export default function KenoPage() {
         player_id: currentPlayerId,
         picks: [...picks],
         stake,
+        draw_count: drawCount,
       });
-      // Reveal drawn numbers one by one
       for (const num of res.draws) {
         await new Promise(r => setTimeout(r, 80));
         setRevealedDraws(prev => new Set([...prev, num]));
@@ -93,7 +129,7 @@ export default function KenoPage() {
   }
 
   const numPicks = picks.size;
-  const payoutRow = PAYOUT_TABLE[numPicks] ?? {};
+  const payoutRow = numPicks > 0 ? buildPayoutRow(numPicks, drawCount) : {};
   const matchesSet = new Set(result?.matches ?? []);
 
   return (
@@ -105,6 +141,28 @@ export default function KenoPage() {
       </div>
 
       <div className="flex-1 flex flex-col items-center gap-5 py-6 px-4 max-w-3xl mx-auto w-full">
+
+        {/* Draw count selector */}
+        <div className="card-surface p-3 w-full">
+          <p className="text-ivory/30 text-xs uppercase tracking-widest mb-2 text-center">Numbers drawn from 80</p>
+          <div className="flex gap-2 justify-center flex-wrap">
+            {DRAW_COUNT_OPTIONS.map(c => (
+              <button
+                key={c}
+                onClick={() => changeDrawCount(c)}
+                disabled={drawing}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-sm font-bold border transition-all disabled:opacity-40",
+                  drawCount === c
+                    ? "bg-green-700 border-green-500 text-white"
+                    : "bg-navy-800/60 border-navy-600 text-ivory/50 hover:text-ivory hover:border-navy-500"
+                )}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Number grid */}
         <div className="card-surface p-4 w-full">
@@ -160,11 +218,11 @@ export default function KenoPage() {
           )}
         </AnimatePresence>
 
-        {/* Payout table for current pick count */}
+        {/* Payout table for current pick count + draw count */}
         {numPicks > 0 && (
           <div className="card-surface p-4 w-full">
             <p className="text-ivory/30 text-xs uppercase tracking-widest mb-2 text-center">
-              Payouts for {numPicks} pick{numPicks !== 1 ? "s" : ""}
+              Payouts for {numPicks} pick{numPicks !== 1 ? "s" : ""}, {drawCount} drawn
             </p>
             <div className="flex flex-wrap gap-1.5 justify-center">
               {Object.entries(payoutRow).sort((a, b) => Number(b[0]) - Number(a[0])).map(([matches, mult]) => (
@@ -184,7 +242,6 @@ export default function KenoPage() {
 
         {/* Controls */}
         <div className="card-surface p-5 w-full flex flex-col items-center gap-4">
-          {/* Stake display */}
           <div className="flex items-center gap-3 min-h-[40px]">
             {stake > 0 ? (
               <>

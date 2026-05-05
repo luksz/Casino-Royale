@@ -17,6 +17,7 @@ class DrawRequest(BaseModel):
     player_id: str
     picks: list[int]
     stake: int
+    draw_count: int = 20
 
 
 class DrawResponse(BaseModel):
@@ -24,6 +25,7 @@ class DrawResponse(BaseModel):
     picks: list[int]
     matches: list[int]
     num_matches: int
+    draw_count: int
     return_multiplier: int
     net_delta: int
     stake: int
@@ -48,7 +50,7 @@ async def draw(
     s = get_settings()
     engine = KenoEngine(make_rng(seed=s.rng_seed, secure=(s.rng_seed is None)))
     try:
-        result = engine.draw(body.picks, body.stake)
+        result = engine.draw(body.picks, body.stake, body.draw_count)
     except ValueError as e:
         await wallet.credit(body.player_id, body.stake)  # refund
         raise HTTPException(400, str(e))
@@ -63,6 +65,7 @@ async def draw(
         picks=result.picks,
         matches=result.matches,
         num_matches=result.num_matches,
+        draw_count=result.draw_count,
         return_multiplier=result.return_multiplier,
         net_delta=result.net_delta,
         stake=result.stake,

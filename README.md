@@ -1,6 +1,6 @@
 # Casino Royale
 
-A local-first casino web app with six fully playable games. Backend in Python (FastAPI), frontend in React + TypeScript. Each game is a pure, tested engine with a thin API and animated UI on top.
+A local-first casino web app with nine fully playable games. Backend in Python (FastAPI), frontend in React + TypeScript. Each game is a pure, tested engine with a thin API and animated UI on top.
 
 ![Casino Royale](https://img.shields.io/badge/status-playable-gold) ![Python](https://img.shields.io/badge/python-3.11+-blue) ![React](https://img.shields.io/badge/react-18-blue) ![Tests](https://img.shields.io/badge/tests-42%20passing-green)
 
@@ -8,14 +8,24 @@ A local-first casino web app with six fully playable games. Backend in Python (F
 
 ## Games
 
+### Casino Games
+
 | Game | Description |
 |------|-------------|
-| 🃏 **Blackjack** | Full rules — Hit, Stand, Double, Split, Surrender. 3:2 on naturals. |
+| 🃏 **Blackjack** | Full rules — Hit, Stand, Double, Split, Surrender. 3:2 on naturals. Perfect Pairs + 21+3 side bets. |
 | 🎡 **Roulette** | European wheel (single zero). All bet types: straight, dozens, columns, red/black, odd/even. |
 | 🎴 **Baccarat** | Punto Banco with full third-card drawing rules. Player / Banker / Tie. 5% banker commission. |
-| 🎰 **Slots** | 3-reel weighted RNG. Six symbols, up to 100× on triple sevens. |
 | ⚔️ **Casino War** | Higher card wins. Ties trigger War — burn three, deal again. |
 | ♠️ **Five Card Draw** | Vs a bot opponent. Click cards to discard and draw. Bot uses pair/flush-draw AI. |
+
+### Games
+
+| Game | Description |
+|------|-------------|
+| 🎰 **Slots** | 3-reel weighted RNG. Six symbols, up to 100× on triple sevens. |
+| 🎲 **Dice** | Roll two dice. Bet on High (8+), Low (6−), Seven, Any Double, Odd, or Even. |
+| 🃏 **Hi-Lo** | Deal a card, then guess Higher or Lower. Correct guesses multiply your stake — cash out any time. |
+| 🔢 **Keno** | Pick 1–10 numbers. Choose how many are drawn (5–40) from a pool of 80. Dynamic payouts via hypergeometric odds with 25% house edge. |
 
 ---
 
@@ -71,7 +81,7 @@ Casino Royale/
 │   │   ├── core/              # Pure game engines — no framework imports
 │   │   │   ├── cards/         # Card, Suit, Rank, Shoe
 │   │   │   ├── rng/           # Seedable RNG (SeededRNG / SecureRNG)
-│   │   │   └── games/         # blackjack, roulette, baccarat, slots, war, poker
+│   │   │   └── games/         # blackjack, roulette, baccarat, slots, war, poker, dice, hilo, keno
 │   │   ├── api/               # FastAPI routes + Pydantic schemas
 │   │   ├── services/          # Wallet, Player, game session orchestration
 │   │   ├── persistence/       # SQLAlchemy models + repositories
