@@ -10,6 +10,7 @@ import PokerPage from "@/games/poker/PokerPage";
 import DicePage from "@/games/dice/DicePage";
 import HiLoPage from "@/games/hilo/HiLoPage";
 import KenoPage from "@/games/keno/KenoPage";
+import TotoPage from "@/games/toto/TotoPage";
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
       <Route path="/games/dice"      element={<DicePage />} />
       <Route path="/games/hilo"      element={<HiLoPage />} />
       <Route path="/games/keno"      element={<KenoPage />} />
+      <Route path="/games/toto"      element={<TotoPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

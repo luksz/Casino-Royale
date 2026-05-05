@@ -12,10 +12,11 @@ const CASINO_GAMES = [
 ];
 
 const QUICK_GAMES = [
-  { id: "slots", name: "Slots",  description: "3 reels. Match symbols to win big.",          path: "/games/slots", icon: "🎰" },
-  { id: "dice",  name: "Dice",   description: "Roll two dice. High, Low, Seven or Double.",  path: "/games/dice",  icon: "🎲" },
-  { id: "hilo",  name: "Hi-Lo",  description: "Higher or lower? Build your multiplier.",     path: "/games/hilo",  icon: "🃏" },
-  { id: "keno",  name: "Keno",   description: "Pick up to 10 numbers. 20 drawn from 80.",    path: "/games/keno",  icon: "🔢" },
+  { id: "slots", name: "Slots",  description: "3 reels. Match symbols to win big.",                   path: "/games/slots", icon: "🎰" },
+  { id: "dice",  name: "Dice",   description: "Roll two dice. High, Low, Seven or Double.",           path: "/games/dice",  icon: "🎲" },
+  { id: "hilo",  name: "Hi-Lo",  description: "Higher or lower? Build your multiplier.",              path: "/games/hilo",  icon: "🃏" },
+  { id: "keno",  name: "Keno",   description: "Pick up to 10 numbers. Choose how many are drawn.",    path: "/games/keno",  icon: "🔢" },
+  { id: "toto",  name: "Toto",   description: "Pick 6 from 49. 6 drawn + 1 bonus. 7 prize tiers.",   path: "/games/toto",  icon: "🎱" },
 ];
 
 function GameCard({ game, delay }: { game: typeof CASINO_GAMES[0]; delay: number }) {
