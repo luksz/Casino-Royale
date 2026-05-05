@@ -28,9 +28,15 @@ def _deal_card(rng: "RNG") -> tuple[int, str]:
 def _multiplier_increase(current_rank: int, guess: str) -> float:
     """Per-step multiplier for a correct guess, accounting for house edge."""
     if guess == "HIGHER":
-        favorable = 14 - current_rank          # ranks strictly above
+        favorable = 14 - current_rank          # strictly above
+    elif guess == "LOWER":
+        favorable = current_rank - 2           # strictly below
+    elif guess == "HIGHER_EQ":
+        favorable = 15 - current_rank          # same or above (includes equal)
+    elif guess == "LOWER_EQ":
+        favorable = current_rank - 1           # same or below (includes equal)
     else:
-        favorable = current_rank - 2           # ranks strictly below (min rank is 2)
+        return 0.0
 
     if favorable <= 0:
         return 0.0
@@ -91,7 +97,7 @@ class HiLoEngine:
                 round_over=True,
             )
 
-        if action not in ("HIGHER", "LOWER"):
+        if action not in ("HIGHER", "LOWER", "HIGHER_EQ", "LOWER_EQ"):
             raise ValueError(f"Unknown action: {action}")
 
         mult_increase = _multiplier_increase(round.current_rank, action)
@@ -110,8 +116,11 @@ class HiLoEngine:
         next_rank, next_suit = _deal_card(self._rng)
         next_code = _card_code(next_rank, next_suit)
 
-        if next_rank == round.current_rank:
-            # Tie — free look, no multiplier change, deal another card for next turn
+        is_tie = next_rank == round.current_rank
+        eq_action = action in ("HIGHER_EQ", "LOWER_EQ")
+
+        if is_tie and not eq_action:
+            # Tie — free look for strict HIGHER/LOWER only
             round.current_rank = next_rank
             round.current_suit = next_suit
             round.history.append(f"TIE:{next_code}")
@@ -124,8 +133,10 @@ class HiLoEngine:
                 round_over=False,
             )
 
-        correct = (action == "HIGHER" and next_rank > round.current_rank) or \
-                  (action == "LOWER"  and next_rank < round.current_rank)
+        correct = (action == "HIGHER"    and next_rank >  round.current_rank) or \
+                  (action == "LOWER"     and next_rank <  round.current_rank) or \
+                  (action == "HIGHER_EQ" and next_rank >= round.current_rank) or \
+                  (action == "LOWER_EQ"  and next_rank <= round.current_rank)
 
         if correct:
             round.multiplier *= mult_increase

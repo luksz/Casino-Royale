@@ -80,7 +80,8 @@ export default function RoulettePage() {
     try {
       const res = await apiPost<SpinResult>("/roulette/spin", { player_id: currentPlayerId, bets });
       const newWheel = calcWheelRotation(wheelRotation, res.winning_number);
-      const newBall = ballRotation - (4 * 360 + 120 + Math.random() * 180);
+      // Ball orbits counter-clockwise and should land near the pointer (top = 0°)
+      const newBall = ballRotation - (4 * 360 + (Math.random() * 16 - 8));
       setWheelRotation(newWheel);
       setBallRotation(newBall);
       await new Promise(r => setTimeout(r, 4800));
