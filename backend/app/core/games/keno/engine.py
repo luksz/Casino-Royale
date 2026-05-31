@@ -45,18 +45,32 @@ def _log_comb(n: int, k: int) -> float:
 def compute_return_multiplier(n_picks: int, n_draws: int, n_matches: int) -> int:
     """
     Total return multiplier using hypergeometric odds + 25% house edge.
-    0 = lose, 1 = push, >1 = win.
-    net_delta = stake * (mult - 1).
+    0 = lose, 1 = push, >1 = win. net_delta = stake * (mult - 1).
+
+    Rules:
+      • The player bets ON matching numbers. Matching too few = always lose,
+        regardless of how unlikely the outcome was. Threshold = ceil(n_picks/2).
+      • Each winning tier (min..n_picks) shares the 75% RTP target equally,
+        so the per-tier payout is (0.75 / num_tiers) / P(this tier).
     """
+    if n_matches == 0:
+        return 0
+
+    min_match = max(1, (n_picks + 1) // 2)
+    if n_matches < min_match:
+        return 0
+
+    num_winning_tiers = n_picks - min_match + 1
     p = _hg_pmf(n_matches, n_draws, n_picks)
     if p <= 0:
         return 0
-    raw = 0.75 / p          # fair payout × (1 - 0.25 house edge)
+
+    raw = 0.75 / (p * num_winning_tiers)
     if raw < 1.4:
-        return 0            # common outcome, house keeps everything
+        return 0
     if raw < 1.9:
-        return 1            # borderline: push (return stake)
-    return min(int(round(raw)), 50_000)
+        return 1
+    return min(int(round(raw)), 100_000)
 
 
 @dataclass

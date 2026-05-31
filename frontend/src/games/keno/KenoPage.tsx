@@ -43,12 +43,16 @@ function hgPmf(k: number, nDraws: number, nPicks: number, pool = POOL_SIZE): num
 }
 
 function computeReturnMultiplier(nPicks: number, nDraws: number, nMatches: number): number {
+  if (nMatches === 0) return 0;
+  const minMatch = Math.max(1, Math.floor((nPicks + 1) / 2));
+  if (nMatches < minMatch) return 0;
+  const numTiers = nPicks - minMatch + 1;
   const p = hgPmf(nMatches, nDraws, nPicks);
   if (p <= 0) return 0;
-  const raw = 0.75 / p;
+  const raw = 0.75 / (p * numTiers);
   if (raw < 1.4) return 0;
   if (raw < 1.9) return 1;
-  return Math.min(Math.round(raw), 50000);
+  return Math.min(Math.round(raw), 100000);
 }
 
 function buildPayoutRow(nPicks: number, drawCount: number): Record<number, number> {
