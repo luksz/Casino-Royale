@@ -46,31 +46,48 @@ A local-first casino web app with eleven fully playable games. Backend in Python
 
 ## Quick Start
 
-You need Python 3.11+ and Node 18+.
+You need:
 
-### 1. Backend
+- Python 3.11+
+- Node.js 18+
+- npm
+
+From a fresh clone, install the backend and frontend dependencies:
 
 ```bash
+# From the repository root
 cd backend
 python3.11 -m venv .venv
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
+cp .env.example .env
+
+cd ../frontend
+npm ci
+```
+
+Start the app in two terminal windows.
+
+Terminal 1 - backend:
+
+```bash
+cd backend
+source .venv/bin/activate
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-API docs available at http://localhost:8001/docs
-
-### 2. Frontend
+Terminal 2 - frontend:
 
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
-Open http://localhost:5173
+Open http://localhost:5173. The API docs are available at http://localhost:8001/docs.
 
-> **Note:** If port 8000 is in use by another project, the backend defaults to **8001**. The Vite proxy is already configured to match.
+The frontend proxies `/api` requests to `http://127.0.0.1:8001`, so keep the backend on port `8001` unless you also update `frontend/vite.config.ts`.
+
+The SQLite database is created automatically at `backend/casino_royale.db` the first time the backend starts.
 
 ---
 
@@ -118,6 +135,14 @@ pytest
 
 42 tests — unit tests for every game engine, property-based invariant tests (Hypothesis), and integration tests against the full API.
 
+Frontend checks:
+
+```bash
+cd frontend
+npm run typecheck
+npm run lint
+```
+
 ---
 
 ## Architecture Principles
@@ -144,11 +169,20 @@ RNG_SEED=
 
 Leave `RNG_SEED` empty for cryptographically secure randomness in production. Set it to any integer for deterministic/reproducible games (useful for testing).
 
+If your shell already exports one of these names, it can override `.env`. For example, `DEBUG` must be `true` or `false`; unset it if your shell uses a different value:
+
+```bash
+unset DEBUG
+```
+
 ---
 
 ## Makefile
 
+The Makefile is a convenience wrapper after the Python virtual environment and Node dependencies are installed.
+
 ```bash
+make install        # Install Python and Node dependencies after backend/.venv exists
 make dev-backend    # Start backend on port 8001
 make dev-frontend   # Start frontend on port 5173
 make test           # Run pytest
