@@ -16,7 +16,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
     try {
       const body = await res.json();
       detail = body.detail ?? detail;
-    } catch {}
+    } catch { /* non-JSON error body — keep default detail */ }
     throw new ApiError(res.status, detail);
   }
   return res.json() as Promise<T>;

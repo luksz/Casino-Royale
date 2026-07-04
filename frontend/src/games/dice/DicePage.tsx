@@ -11,16 +11,16 @@ import { cn } from "@/lib/utils";
 
 interface DiceResult {
   die1: number; die2: number; total: number; is_double: boolean;
-  bet_type: string; won: boolean; net_delta: number; new_balance: number;
+  bet_type: string; won: boolean; push: boolean; net_delta: number; new_balance: number;
 }
 
 const BET_TYPES = [
   { key: "LOW",        label: "Low",    sub: "2 – 6",    odds: "1:1",  color: "bg-blue-700 hover:bg-blue-600 border-blue-500" },
   { key: "SEVEN",      label: "Seven",  sub: "Exactly 7", odds: "4:1", color: "bg-gold-600 hover:bg-gold-500 border-gold-400" },
   { key: "HIGH",       label: "High",   sub: "8 – 12",   odds: "1:1",  color: "bg-red-700 hover:bg-red-600 border-red-500" },
-  { key: "ODD",        label: "Odd",    sub: "Odd total", odds: "1:1", color: "bg-purple-700 hover:bg-purple-600 border-purple-500" },
-  { key: "EVEN",       label: "Even",   sub: "Even total",odds: "1:1", color: "bg-teal-700 hover:bg-teal-600 border-teal-500" },
-  { key: "ANY_DOUBLE", label: "Double", sub: "Same face", odds: "5:1", color: "bg-orange-700 hover:bg-orange-600 border-orange-500" },
+  { key: "ODD",        label: "Odd",    sub: "7 pushes",  odds: "1:1", color: "bg-purple-700 hover:bg-purple-600 border-purple-500" },
+  { key: "EVEN",       label: "Even",   sub: "7 pushes · doubles lose", odds: "1:1", color: "bg-teal-700 hover:bg-teal-600 border-teal-500" },
+  { key: "ANY_DOUBLE", label: "Double", sub: "Same face", odds: "4:1", color: "bg-orange-700 hover:bg-orange-600 border-orange-500" },
 ];
 
 const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
@@ -82,7 +82,7 @@ export default function DicePage() {
       setResult(res);
       refetch();
       recordRound("Dice", res.net_delta);
-      res.won ? win() : lose();
+      if (res.won) win(); else if (!res.push) lose();
     } finally {
       setRolling(false);
     }
@@ -132,10 +132,10 @@ export default function DicePage() {
               transition={{ type: "spring", stiffness: 260, damping: 22 }}
               className="card-surface px-8 py-5 text-center w-full"
             >
-              <p className={`font-display text-3xl font-bold ${result.won ? "text-green-400" : "text-red-400"}`}>
-                {result.won ? "Winner!" : "No luck"}
+              <p className={`font-display text-3xl font-bold ${result.won ? "text-green-400" : result.push ? "text-ivory" : "text-red-400"}`}>
+                {result.won ? "Winner!" : result.push ? "Push" : "No luck"}
               </p>
-              <p className={`text-xl font-semibold mt-1 ${result.net_delta > 0 ? "text-green-400" : "text-red-400"}`}>
+              <p className={`text-xl font-semibold mt-1 ${result.net_delta > 0 ? "text-green-400" : result.net_delta === 0 ? "text-ivory/60" : "text-red-400"}`}>
                 {result.net_delta > 0 ? `+${result.net_delta.toLocaleString()}` : result.net_delta.toLocaleString()} chips
               </p>
             </motion.div>

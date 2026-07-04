@@ -15,19 +15,36 @@ A local-first casino web app with eleven fully playable games. Backend in Python
 | 🃏 **Blackjack** | Full rules — Hit, Stand, Double, Split, Surrender. 3:2 on naturals. Perfect Pairs + 21+3 side bets. |
 | 🎡 **Roulette** | European wheel (single zero). All bet types: straight, dozens, columns, red/black, odd/even. |
 | 🎴 **Baccarat** | Punto Banco with full third-card drawing rules. Player / Banker / Tie. 5% banker commission. |
-| ⚔️ **Casino War** | Higher card wins. Ties trigger War — burn three, deal again. |
+| ⚔️ **Casino War** | Higher card wins. Ties trigger War — an equal raise goes up (2× stake at risk), burn three, deal again. War win pays the original bet; tie-after-tie pays a 2× bonus. |
 | ♠️ **Five Card Draw** | Vs a bot opponent. Click cards to discard and draw. Bot uses pair/flush-draw AI. |
 
 ### Games
 
 | Game | Description |
 |------|-------------|
-| 🎰 **Slots** | 3-reel weighted RNG. Six symbols, up to 100× on triple sevens. |
-| 🎲 **Dice** | Roll two dice. Bet on High (8+), Low (6−), Seven, Any Double, Odd, or Even. |
-| 🃏 **Hi-Lo** | Deal a card, then guess Higher or Lower. Correct guesses multiply your stake — cash out any time. |
-| 🔢 **Keno** | Pick 1–10 numbers. Choose how many are drawn (5–40) from a pool of 80. Dynamic payouts via hypergeometric odds with 25% house edge. |
-| 🎱 **Toto** | Lottery-style. Pick 6 from 49. Draw 6 main numbers + 1 bonus. Seven prize tiers from 45:1 (3 matches) up to 49,999:1 jackpot. Quick Pick supported. |
-| 🎳 **Pachinko** | Drop balls through a peg board (Plinko-style). Choose 8/12/16 rows and Low/Medium/High risk. Multipliers up to 1000× on high risk. 1–5 balls per drop, animated slot-by-slot. |
+| 🎰 **Slots** | 3-reel weighted RNG. Six symbols, up to 200× on triple sevens. Pair of cherries or sevens pays a consolation. |
+| 🎲 **Dice** | Roll two dice, Over/Under 7 style. Bet on High (8+), Low (6−), Seven (4:1), Any Double (4:1), Odd, or Even (7 pushes; doubles lose Even). |
+| 🃏 **Hi-Lo** | Deal a card, then guess Higher or Lower. Live per-card odds shown on each button. Correct guesses multiply your stake — cash out any time. |
+| 🔢 **Keno** | Pick 1–10 numbers. Choose how many are drawn (5–40) from a pool of 80. Must match at least half your picks to win. Dynamic payouts via hypergeometric odds with 25% house edge. |
+| 🎱 **Toto** | Lottery-style. Pick 6 from 49. Draw 6 main numbers + 1 bonus. Seven prize tiers from 15× (3 matches) up to 100,000× jackpot. Quick Pick supported. |
+| 🎳 **Pachinko** | Drop balls through a peg board (Plinko-style). Choose 8/12/16 rows and Low/Medium/High risk. Multipliers up to 1000× on high risk. 1–5 balls per drop, animated slot-by-slot. Spam-drop supported — queue multiple drops without waiting. |
+
+### House Edge
+
+Every game has been audited so the house always has a real (but fair) edge:
+
+| Game | House edge |
+|------|-----------|
+| Blackjack | ~0.5% (basic strategy) |
+| Baccarat | 1.1–1.2% (Player/Banker) |
+| Casino War | ~2.3% |
+| Roulette | 2.7% (European) |
+| Hi-Lo | ~4% per guess |
+| Slots | ~6.4% |
+| Dice | 16.7% (classic Over/Under 7 odds, all bets) |
+| Keno | ~25% |
+| Toto | ~49% (RTP ~51%, typical lottery) |
+| Pachinko | ~1–5% depending on rows/risk |
 
 ---
 

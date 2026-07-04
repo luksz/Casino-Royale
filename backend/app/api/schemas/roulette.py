@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from app.core.games.roulette.bets import BetType
 
 

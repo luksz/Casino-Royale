@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.api.dependencies import get_wallet_service
+from app.config.settings import get_settings
 from app.core.games.toto.engine import TotoEngine
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 

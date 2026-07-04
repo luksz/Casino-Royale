@@ -61,6 +61,12 @@ export default function BlackjackTablePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state?.phase]);
 
+  const showBadge = useCallback((label: string) => {
+    setActionBadge(label);
+    if (badgeTimer.current) clearTimeout(badgeTimer.current);
+    badgeTimer.current = setTimeout(() => setActionBadge(null), 900);
+  }, []);
+
   if (!currentPlayerId) { navigate("/"); return null; }
 
   const balance = balanceData?.balance ?? 0;
@@ -71,12 +77,6 @@ export default function BlackjackTablePage() {
 
   const totalBetting = bet + ppBet + t21Bet;
   const lastTotal = lastBet + lastPpBet + lastT21Bet;
-
-  const showBadge = useCallback((label: string) => {
-    setActionBadge(label);
-    if (badgeTimer.current) clearTimeout(badgeTimer.current);
-    badgeTimer.current = setTimeout(() => setActionBadge(null), 900);
-  }, []);
 
   function handleAction(action: PlayerAction) {
     showBadge(

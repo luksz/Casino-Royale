@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -19,7 +20,7 @@ def _card_code(rank: int, suit: str) -> str:
     return f"{_rank_display(rank)}{suit}"
 
 
-def _deal_card(rng: "RNG") -> tuple[int, str]:
+def _deal_card(rng: RNG) -> tuple[int, str]:
     rank = rng.choice(RANKS)
     suit = rng.choice(SUITS)
     return rank, suit
@@ -74,7 +75,7 @@ class HiLoGuessResult:
 
 
 class HiLoEngine:
-    def __init__(self, rng: "RNG") -> None:
+    def __init__(self, rng: RNG) -> None:
         self._rng = rng
 
     def start_round(self, player_id: str, stake: int) -> HiLoRound:

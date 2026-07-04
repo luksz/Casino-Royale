@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.dependencies import get_wallet_service
 from app.api.schemas.baccarat import BaccaratPlayRequest, BaccaratResultResponse
+from app.config.settings import get_settings
 from app.core.games.baccarat.engine import BaccaratEngine
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 

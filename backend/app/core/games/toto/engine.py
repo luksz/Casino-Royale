@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -9,14 +10,15 @@ POOL_SIZE = 49
 PICK_COUNT = 6
 
 # (main_matches, bonus_hit) → total return multiplier (net_delta = stake * (mult - 1))
+# Tuned to an overall RTP of ~51% (typical lottery territory).
 PRIZE_TIERS: dict[tuple[int, bool], int] = {
-    (6, False): 50_000,   # Group 1 – Jackpot
-    (5, True):  10_000,   # Group 2
-    (5, False):  1_000,   # Group 3
-    (4, True):     200,   # Group 4
-    (4, False):     50,   # Group 5
-    (3, True):      25,   # Group 6
-    (3, False):     10,   # Group 7
+    (6, False): 100_000,  # Group 1 – Jackpot
+    (5, True):   20_000,  # Group 2
+    (5, False):   2_500,  # Group 3
+    (4, True):      500,  # Group 4
+    (4, False):     120,  # Group 5
+    (3, True):       60,  # Group 6
+    (3, False):      15,  # Group 7
 }
 
 
@@ -48,7 +50,7 @@ def _tier_label(main_matches: int, bonus_hit: bool) -> str:
 
 
 class TotoEngine:
-    def __init__(self, rng: "RNG") -> None:
+    def __init__(self, rng: RNG) -> None:
         self._rng = rng
 
     def draw(self, picks: list[int], stake: int) -> TotoResult:
@@ -75,8 +77,6 @@ class TotoEngine:
         bonus_hit = bonus in non_matching_picks
 
         return_multiplier = PRIZE_TIERS.get((num_main, bonus_hit), 0)
-        # If no bonus prize but check without bonus flag for tier (e.g. 5 matches regardless of bonus)
-        # Already handled: (5, True) and (5, False) are separate keys
         net_delta = stake * (return_multiplier - 1) if return_multiplier > 0 else -stake
 
         return TotoResult(

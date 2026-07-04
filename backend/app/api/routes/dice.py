@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.api.dependencies import get_wallet_service
+from app.config.settings import get_settings
 from app.core.games.dice.engine import DiceEngine
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 
@@ -26,6 +26,7 @@ class RollResponse(BaseModel):
     is_double: bool
     bet_type: str
     won: bool
+    push: bool
     net_delta: int
     new_balance: int
 
@@ -65,6 +66,7 @@ async def roll(
         is_double=result.is_double,
         bet_type=result.bet_type,
         won=result.won,
+        push=result.push,
         net_delta=result.net_delta,
         new_balance=new_balance,
     )

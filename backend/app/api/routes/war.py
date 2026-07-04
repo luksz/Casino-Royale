@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.dependencies import get_wallet_service
 from app.api.schemas.war import WarPlayRequest, WarResultResponse
+from app.config.settings import get_settings
 from app.core.games.war.engine import WarEngine
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 
@@ -28,8 +28,9 @@ async def play(
     body: WarPlayRequest,
     wallet: Annotated[WalletService, Depends(get_wallet_service)],
 ) -> WarResultResponse:
+    # Reserve 2× stake: a tie forces war, putting an equal raise at risk
     try:
-        await wallet.debit(body.player_id, body.stake)
+        await wallet.debit(body.player_id, body.stake * 2)
     except PlayerNotFoundError as e:
         raise HTTPException(404, str(e))
     except InsufficientFundsError as e:
@@ -37,10 +38,9 @@ async def play(
 
     result = _get_engine().play(body.stake)
 
-    if result.net_delta > 0:
-        await wallet.credit(body.player_id, body.stake + result.net_delta)
-    elif result.net_delta == 0:
-        await wallet.credit(body.player_id, body.stake)
+    refund = body.stake * 2 + result.net_delta
+    if refund > 0:
+        await wallet.credit(body.player_id, refund)
 
     new_balance = await wallet.get_balance(body.player_id)
     return WarResultResponse(**result.__dict__, new_balance=new_balance)

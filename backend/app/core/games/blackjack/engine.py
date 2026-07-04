@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fractions import Fraction
+
 from typing import TYPE_CHECKING
 
 from app.core.cards.shoe import Shoe
@@ -16,7 +16,7 @@ class InvalidActionError(Exception):
 
 
 class BlackjackEngine:
-    def __init__(self, rules: BlackjackRules | None = None, rng: "RNG | None" = None) -> None:
+    def __init__(self, rules: BlackjackRules | None = None, rng: RNG | None = None) -> None:
         from app.core.rng.rng import make_rng
         self._rules = rules or BlackjackRules()
         self._rng = rng or make_rng(secure=True)

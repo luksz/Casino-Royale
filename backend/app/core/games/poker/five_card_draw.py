@@ -1,10 +1,11 @@
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
 from app.core.cards.card import Card
 from app.core.cards.shoe import Shoe
 from app.core.games.poker.evaluator import evaluate
+from app.core.rng.rng import RNG
 
 
 class PokerPhase(Enum):
@@ -26,7 +27,7 @@ class PokerState:
 
 
 class FiveCardDrawEngine:
-    def __init__(self, rng) -> None:
+    def __init__(self, rng: RNG) -> None:
         self._shoe = Shoe(rng, decks=1)
         self._player: list[Card] = []
         self._bot: list[Card] = []
@@ -81,7 +82,7 @@ class FiveCardDrawEngine:
 
         suit_counts = Counter(suits)
         if max(suit_counts.values()) >= 4:
-            dom = max(suit_counts, key=suit_counts.get)
+            dom = max(suit_counts, key=lambda s: suit_counts[s])
             return [i for i, c in enumerate(self._bot) if c.suit != dom]
 
         by_val = sorted(range(5), key=lambda i: vals[i])

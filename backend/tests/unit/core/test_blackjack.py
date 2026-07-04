@@ -1,15 +1,15 @@
+
 import pytest
-from fractions import Fraction
-from hypothesis import given, settings as hyp_settings
+from hypothesis import given
+from hypothesis import settings as hyp_settings
 from hypothesis import strategies as st
 
-from app.core.cards.card import Card, Rank, Suit
+from app.core.cards.card import Card
 from app.core.games.blackjack.engine import BlackjackEngine, InvalidActionError
 from app.core.games.blackjack.hand import BlackjackHand
 from app.core.games.blackjack.rules import BlackjackRules
 from app.core.games.blackjack.state import GamePhase, Outcome, PlayerAction
 from app.core.rng.rng import SeededRNG
-
 
 # ---- Hand value tests ----
 
@@ -84,7 +84,8 @@ def test_surrender_halves_bet():
     for seed in range(100):
         engine = BlackjackEngine(rules=BlackjackRules(deck_count=1), rng=SeededRNG(seed))
         state = engine.start_round(100)
-        if state.phase == GamePhase.PLAYER_TURN and PlayerAction.SURRENDER in state.available_actions:
+        can_surrender = PlayerAction.SURRENDER in state.available_actions
+        if state.phase == GamePhase.PLAYER_TURN and can_surrender:
             state = engine.apply_action(PlayerAction.SURRENDER)
             assert state.net_delta == -50
             assert state.outcomes[0] == Outcome.SURRENDER

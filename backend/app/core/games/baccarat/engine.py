@@ -3,6 +3,7 @@ from enum import Enum
 
 from app.core.cards.card import Card, Rank
 from app.core.cards.shoe import Shoe
+from app.core.rng.rng import RNG
 
 
 class BaccaratBet(Enum):
@@ -16,7 +17,7 @@ def _val(card: Card) -> int:
         return 0
     if card.rank == Rank.ACE:
         return 1
-    return card.rank.value
+    return int(card.rank.value)
 
 
 def _score(cards: list[Card]) -> int:
@@ -36,7 +37,7 @@ class BaccaratResult:
 
 
 class BaccaratEngine:
-    def __init__(self, rng) -> None:
+    def __init__(self, rng: RNG) -> None:
         self._shoe = Shoe(rng, decks=8)
 
     def play(self, bet: BaccaratBet, stake: int) -> BaccaratResult:

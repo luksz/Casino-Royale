@@ -74,7 +74,7 @@ export default function WarPage() {
       </div>
 
       <div className="flex-1 flex flex-col items-center gap-6 py-8 px-4 max-w-lg mx-auto w-full">
-        <p className="text-ivory/30 text-sm text-center">Higher card wins. Ties go to War!</p>
+        <p className="text-ivory/30 text-sm text-center">Higher card wins. Ties go to War — an equal raise is at risk, so you need 2× your stake to play.</p>
 
         {/* Cards */}
         <div className="grid grid-cols-2 gap-6 w-full">
@@ -146,12 +146,12 @@ export default function WarPage() {
           {/* Chip buttons */}
           <div className="flex gap-2 flex-wrap justify-center">
             {CHIP_VALUES.map(v => (
-              <Chip key={v} value={v} disabled={loading || stake + v > balance} onClick={() => setStake(s => s + v)} />
+              <Chip key={v} value={v} disabled={loading || (stake + v) * 2 > balance} onClick={() => setStake(s => s + v)} />
             ))}
             {balance > 5000 && (
               <button
-                onClick={() => setStake(balance)}
-                disabled={loading || stake >= balance}
+                onClick={() => setStake(Math.floor(balance / 2))}
+                disabled={loading || stake >= Math.floor(balance / 2)}
                 className={cn(
                   "px-3 h-12 rounded-full font-bold text-xs border-4 transition-all disabled:opacity-30",
                   "border-gold-600/40 bg-navy-800 text-gold-500/70 hover:text-gold-400 hover:border-gold-400/60"
@@ -165,7 +165,7 @@ export default function WarPage() {
           {/* Re-bet row */}
           {lastStake > 0 && (
             <div className="flex gap-2 w-full">
-              <button onClick={() => setStake(lastStake)} disabled={loading || lastStake > balance}
+              <button onClick={() => setStake(lastStake)} disabled={loading || lastStake * 2 > balance}
                 className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
                 Re-bet <span className="text-ivory/40">({lastStake.toLocaleString()})</span>
               </button>
@@ -173,7 +173,7 @@ export default function WarPage() {
                 className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
                 ½ Bet
               </button>
-              <button onClick={() => setStake(lastStake * 2)} disabled={loading || lastStake * 2 > balance}
+              <button onClick={() => setStake(lastStake * 2)} disabled={loading || lastStake * 4 > balance}
                 className="flex-1 py-2 rounded-lg border border-royal-600/50 text-ivory/70 hover:text-ivory text-xs font-semibold transition-all disabled:opacity-30">
                 ×2 Bet
               </button>
@@ -185,7 +185,7 @@ export default function WarPage() {
             <button onClick={() => setStake(0)} disabled={stake === 0 || loading} className="btn-ghost flex-1 text-sm py-2">
               Clear{stake > 0 ? ` (${stake.toLocaleString()})` : ""}
             </button>
-            <button onClick={play} disabled={loading || stake <= 0 || stake > balance} className="btn-primary flex-1 text-base py-3">
+            <button onClick={play} disabled={loading || stake <= 0 || stake * 2 > balance} className="btn-primary flex-1 text-base py-3">
               {loading ? "Dealing…" : `⚔️ Go to War · ${stake.toLocaleString()}`}
             </button>
           </div>

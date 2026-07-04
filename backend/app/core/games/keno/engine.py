@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from math import comb, log, exp
+from math import exp, log
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -86,7 +87,7 @@ class KenoResult:
 
 
 class KenoEngine:
-    def __init__(self, rng: "RNG") -> None:
+    def __init__(self, rng: RNG) -> None:
         self._rng = rng
 
     def draw(self, picks: list[int], stake: int, draw_count: int = 20) -> KenoResult:

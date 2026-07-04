@@ -1,10 +1,16 @@
 from collections.abc import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import DeclarativeBase
 
 from app.config.settings import get_settings
 
-_engine = None
+_engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 
@@ -12,7 +18,7 @@ class Base(DeclarativeBase):
     pass
 
 
-def _get_engine():
+def _get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()

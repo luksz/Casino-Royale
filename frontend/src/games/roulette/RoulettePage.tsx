@@ -5,7 +5,8 @@ import { useSessionStore } from "@/store/sessionStore";
 import { usePlayerBalance } from "@/hooks/usePlayer";
 import { useSound } from "@/hooks/useSound";
 import { apiPost } from "@/lib/api";
-import { RouletteWheel, calcWheelRotation, RED_NUMS } from "@/components/roulette/RouletteWheel";
+import { RouletteWheel } from "@/components/roulette/RouletteWheel";
+import { calcWheelRotation, RED_NUMS } from "@/components/roulette/wheelMath";
 import { ChipStack } from "@/components/casino/ChipStack";
 import { cn } from "@/lib/utils";
 

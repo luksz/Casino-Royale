@@ -27,13 +27,13 @@ const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
 const ALL_NUMBERS = Array.from({ length: 49 }, (_, i) => i + 1);
 
 const PRIZE_TABLE = [
-  { label: "Group 1 – Jackpot", desc: "6 numbers",            mult: 50_000 },
-  { label: "Group 2",           desc: "5 numbers + bonus",    mult: 10_000 },
-  { label: "Group 3",           desc: "5 numbers",            mult:  1_000 },
-  { label: "Group 4",           desc: "4 numbers + bonus",    mult:    200 },
-  { label: "Group 5",           desc: "4 numbers",            mult:     50 },
-  { label: "Group 6",           desc: "3 numbers + bonus",    mult:     25 },
-  { label: "Group 7",           desc: "3 numbers",            mult:     10 },
+  { label: "Group 1 – Jackpot", desc: "6 numbers",            mult: 100_000 },
+  { label: "Group 2",           desc: "5 numbers + bonus",    mult:  20_000 },
+  { label: "Group 3",           desc: "5 numbers",            mult:   2_500 },
+  { label: "Group 4",           desc: "4 numbers + bonus",    mult:     500 },
+  { label: "Group 5",           desc: "4 numbers",            mult:     120 },
+  { label: "Group 6",           desc: "3 numbers + bonus",    mult:      60 },
+  { label: "Group 7",           desc: "3 numbers",            mult:      15 },
 ];
 
 // Ball colours cycle through cheerful lottery colours

@@ -3,11 +3,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.dependencies import get_wallet_service
-from app.api.schemas.roulette import BetRequest, SpinRequest, SpinResponse, PayoutDetailResponse
+from app.api.schemas.roulette import PayoutDetailResponse, SpinRequest, SpinResponse
+from app.config.settings import get_settings
 from app.core.games.roulette.bets import Bet
 from app.core.games.roulette.engine import RouletteEngine
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 
@@ -50,6 +50,11 @@ async def spin(
         is_red=result.is_red,
         is_black=result.is_black,
         net_delta=result.net_delta,
-        payouts=[PayoutDetailResponse(bet_type=p.bet_type, number=p.number, amount=p.amount, won=p.won, delta=p.delta) for p in result.payouts],
+        payouts=[
+            PayoutDetailResponse(
+                bet_type=p.bet_type, number=p.number, amount=p.amount, won=p.won, delta=p.delta
+            )
+            for p in result.payouts
+        ],
         new_balance=new_balance,
     )

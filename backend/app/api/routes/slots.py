@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.dependencies import get_wallet_service
 from app.api.schemas.slots import SlotSpinRequest, SlotSpinResponse
+from app.config.settings import get_settings
 from app.core.games.slots.engine import SlotsEngine
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 

@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.api.dependencies import get_wallet_service
+from app.config.settings import get_settings
 from app.core.games.pachinko.engine import PachinkoEngine
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 
@@ -70,7 +70,10 @@ async def drop(
 
     new_balance = await wallet.get_balance(body.player_id)
     return DropResponse(
-        balls=[BallResponse(path=b.path, slot=b.slot, multiplier=b.multiplier, net_delta=b.net_delta) for b in result.balls],
+        balls=[
+            BallResponse(path=b.path, slot=b.slot, multiplier=b.multiplier, net_delta=b.net_delta)
+            for b in result.balls
+        ],
         total_net_delta=result.total_net_delta,
         stake_per_ball=result.stake_per_ball,
         num_balls=result.num_balls,

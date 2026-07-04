@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.core.cards.shoe import Shoe
+from app.core.rng.rng import RNG
 
 
 @dataclass
@@ -14,7 +15,7 @@ class WarResult:
 
 
 class WarEngine:
-    def __init__(self, rng) -> None:
+    def __init__(self, rng: RNG) -> None:
         self._shoe = Shoe(rng, decks=6)
 
     def play(self, stake: int) -> WarResult:
@@ -30,10 +31,14 @@ class WarEngine:
         if dv > pv:
             return WarResult(pc.code, dc.code, "LOSE", None, None, -stake)
 
-        # War — burn 3 each, deal one more
+        # War — an equal raise goes up, so 2× stake is now at risk.
+        # Win the war: original bet pays, raise is returned (net +stake).
+        # Tie again: bonus pays double (net +2×stake). Lose: both bets lost.
         self._shoe.draw_many(min(6, len(self._shoe)))
         p2 = self._shoe.draw()
         d2 = self._shoe.draw()
-        result = "WAR_WIN" if p2.rank.value >= d2.rank.value else "WAR_LOSE"
-        net = stake if result == "WAR_WIN" else -stake
-        return WarResult(pc.code, dc.code, result, p2.code, d2.code, net)
+        if p2.rank.value > d2.rank.value:
+            return WarResult(pc.code, dc.code, "WAR_WIN", p2.code, d2.code, stake)
+        if p2.rank.value == d2.rank.value:
+            return WarResult(pc.code, dc.code, "WAR_WIN", p2.code, d2.code, 2 * stake)
+        return WarResult(pc.code, dc.code, "WAR_LOSE", p2.code, d2.code, -2 * stake)

@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from app.core.cards.card import Card, Rank, Suit
@@ -16,7 +17,7 @@ def build_standard_deck() -> list[Card]:
 
 
 class Shoe:
-    def __init__(self, rng: "RNG", decks: int = 1) -> None:
+    def __init__(self, rng: RNG, decks: int = 1) -> None:
         self._rng = rng
         self._decks = decks
         self._total = 52 * decks

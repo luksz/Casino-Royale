@@ -45,7 +45,9 @@ _RANK_CODE: dict[str, Rank] = {
     "6": Rank.SIX, "7": Rank.SEVEN, "8": Rank.EIGHT, "9": Rank.NINE,
     "10": Rank.TEN, "J": Rank.JACK, "Q": Rank.QUEEN, "K": Rank.KING, "A": Rank.ACE,
 }
-_SUIT_CODE: dict[str, Suit] = {"C": Suit.CLUBS, "D": Suit.DIAMONDS, "H": Suit.HEARTS, "S": Suit.SPADES}
+_SUIT_CODE: dict[str, Suit] = {
+    "C": Suit.CLUBS, "D": Suit.DIAMONDS, "H": Suit.HEARTS, "S": Suit.SPADES,
+}
 
 
 @dataclass(frozen=True, slots=True)

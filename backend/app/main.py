@@ -1,13 +1,27 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import (
+    baccarat,
+    blackjack,
+    dice,
+    health,
+    hilo,
+    keno,
+    pachinko,
+    players,
+    poker,
+    roulette,
+    slots,
+    toto,
+    war,
+)
 from app.config.settings import get_settings
 from app.logging_config import setup_logging
 from app.persistence.database import init_db
-from app.api.routes import health, players, blackjack, roulette, baccarat, slots, war, poker, dice, hilo, keno, toto, pachinko
 
 
 @asynccontextmanager

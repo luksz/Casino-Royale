@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.api.dependencies import get_wallet_service
 from app.api.schemas.poker import PokerDealRequest, PokerDrawRequest, PokerStateResponse
-from app.core.games.poker.five_card_draw import FiveCardDrawEngine, PokerPhase
-from app.core.rng.rng import make_rng
 from app.config.settings import get_settings
+from app.core.games.poker.five_card_draw import FiveCardDrawEngine, PokerPhase, PokerState
+from app.core.rng.rng import make_rng
 from app.persistence.repositories.player_repository import PlayerNotFoundError
 from app.services.wallet_service import InsufficientFundsError, WalletService
 
@@ -21,15 +21,7 @@ def _make_engine() -> FiveCardDrawEngine:
     return FiveCardDrawEngine(make_rng(seed=s.rng_seed, secure=(s.rng_seed is None)))
 
 
-def _to_response(round_id: str, engine: FiveCardDrawEngine, new_balance: int | None = None) -> PokerStateResponse:
-    s = engine.state if hasattr(engine, '_state_cache') else None
-    st = engine._make_state(engine._state_cache.phase) if s else None
-    # just re-use stored state from deal/draw
-    return _round_response(round_id, engine, new_balance)
-
-
-def _round_response(round_id: str, engine: FiveCardDrawEngine, new_balance: int | None) -> PokerStateResponse:
-    st = engine._last_state
+def _round_response(round_id: str, st: PokerState, new_balance: int | None) -> PokerStateResponse:
     settled = st.phase == PokerPhase.SETTLED
     return PokerStateResponse(
         round_id=round_id,
@@ -59,12 +51,11 @@ async def deal(
 
     engine = _make_engine()
     state = engine.deal(body.stake)
-    engine._last_state = state
     round_id = str(uuid.uuid4())
     _rounds[round_id] = (engine, body.player_id, body.stake)
 
     balance = await wallet.get_balance(body.player_id)
-    return _round_response(round_id, engine, balance)
+    return _round_response(round_id, state, balance)
 
 
 @router.post("/rounds/{round_id}/draw", response_model=PokerStateResponse)
@@ -78,7 +69,6 @@ async def draw(
 
     engine, player_id, stake = _rounds[round_id]
     state = engine.draw(body.discard_indices)
-    engine._last_state = state
 
     if state.net_delta > 0:
         await wallet.credit(player_id, stake + state.net_delta)
@@ -86,4 +76,4 @@ async def draw(
         await wallet.credit(player_id, stake)
 
     balance = await wallet.get_balance(player_id)
-    return _round_response(round_id, engine, balance)
+    return _round_response(round_id, state, balance)

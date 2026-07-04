@@ -39,18 +39,18 @@ const ROW_HEIGHTS: Record<number, number> = { 8: 44, 12: 36, 16: 28 };
 const PAYOUTS: Record<number, Record<string, number[]>> = {
   8: {
     low:    [5.6, 2.1, 1.1, 1.0, 0.5, 1.0, 1.1, 2.1, 5.6],
-    medium: [13., 3.0, 1.3, 0.7, 0.4, 0.7, 1.3, 3.0, 13.],
-    high:   [29., 4.0, 1.5, 0.3, 0.2, 0.3, 1.5, 4.0, 29.],
+    medium: [13, 3.0, 1.3, 0.7, 0.4, 0.7, 1.3, 3.0, 13],
+    high:   [29, 4.0, 1.5, 0.3, 0.2, 0.3, 1.5, 4.0, 29],
   },
   12: {
     low:    [5.6, 2.0, 1.6, 1.4, 1.1, 1.0, 0.5, 1.0, 1.1, 1.4, 1.6, 2.0, 5.6],
-    medium: [33., 11., 4.0, 2.0, 1.1, 0.6, 0.3, 0.6, 1.1, 2.0, 4.0, 11., 33.],
-    high:   [170., 24., 8.1, 2.0, 0.7, 0.2, 0.2, 0.2, 0.7, 2.0, 8.1, 24., 170.],
+    medium: [33, 11, 4.0, 2.0, 1.1, 0.6, 0.3, 0.6, 1.1, 2.0, 4.0, 11, 33],
+    high:   [170, 24, 8.1, 2.0, 0.7, 0.2, 0.2, 0.2, 0.7, 2.0, 8.1, 24, 170],
   },
   16: {
     low:    [5.6, 2.0, 1.4, 1.4, 1.2, 1.1, 1.0, 0.7, 0.5, 0.7, 1.0, 1.1, 1.2, 1.4, 1.4, 2.0, 5.6],
-    medium: [110., 41., 10., 5.0, 3.0, 1.5, 1.0, 0.5, 0.3, 0.5, 1.0, 1.5, 3.0, 5.0, 10., 41., 110.],
-    high:   [1000., 130., 26., 9.0, 4.0, 2.0, 0.2, 0.2, 0.2, 0.2, 0.2, 2.0, 4.0, 9.0, 26., 130., 1000.],
+    medium: [110, 41, 10, 5.0, 3.0, 1.5, 1.0, 0.5, 0.3, 0.5, 1.0, 1.5, 3.0, 5.0, 10, 41, 110],
+    high:   [1000, 130, 26, 9.0, 4.0, 2.0, 0.2, 0.2, 0.2, 0.2, 0.2, 2.0, 4.0, 9.0, 26, 130, 1000],
   },
 };
 
@@ -206,10 +206,8 @@ export default function PachinkoPage() {
   const [animBallIdx, setAnimBallIdx] = useState(-1);
   const [animStep, setAnimStep] = useState(0);
   const [litSlot, setLitSlot] = useState<number | null>(null);
-  const [ballHistory, setBallHistory] = useState<{ mult: number; net: number }[]>([]);
   const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  if (!currentPlayerId) { navigate("/"); return null; }
   const balance = balanceData?.balance ?? 0;
 
   const rowH = ROW_HEIGHTS[rows];
@@ -250,6 +248,8 @@ export default function PachinkoPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animStep, animBallIdx]);
 
+  if (!currentPlayerId) { navigate("/"); return null; }
+
   async function dropBalls() {
     if (stakePerBall <= 0 || requesting || totalStake > balance) return;
 
@@ -271,7 +271,6 @@ export default function PachinkoPage() {
         risk,
       });
       setResult(res);
-      setBallHistory(res.balls.map(b => ({ mult: b.multiplier, net: b.net_delta })));
       setAnimBallIdx(0);
       setAnimStep(0);
       // Update balance and session immediately when result arrives
@@ -348,7 +347,7 @@ export default function PachinkoPage() {
         <div className="w-full rounded-xl overflow-hidden border border-navy-700/40">
           <PachinkoBoard
             rows={rows}
-            payouts={result?.payouts ?? []}
+            payouts={payouts}
             ballX={ballX}
             ballY={ballY}
             showBall={showBall}

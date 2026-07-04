@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from app.core.cards.card import Card, Rank, Suit
 
-
 _RED_SUITS = {Suit.HEARTS, Suit.DIAMONDS}
 
 

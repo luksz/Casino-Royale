@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 interface SlotResult { reels: string[]; won: boolean; multiplier: number; net_delta: number; new_balance: number }
 
 const SYMBOLS = ["🍒", "🍋", "🍇", "⭐", "💎", "7️⃣"];
-const PAYOUTS: Record<string, number> = { "🍒": 2, "🍋": 3, "🍇": 5, "⭐": 10, "💎": 25, "7️⃣": 100 };
+const PAYOUTS: Record<string, number> = { "🍒": 5, "🍋": 8, "🍇": 15, "⭐": 25, "💎": 60, "7️⃣": 200 };
 const CHIP_VALUES = [1, 5, 25, 100, 500, 1000, 5000];
 
 function Reel({ symbol, spinning, delay }: { symbol: string; spinning: boolean; delay: number }) {
@@ -132,6 +132,7 @@ export default function SlotsPage() {
               </div>
             ))}
           </div>
+          <p className="text-ivory/30 text-[11px] text-center mt-2">Pairs: 🍒🍒 pays 1× · 7️⃣7️⃣ pays 5×</p>
         </div>
 
         {/* Controls */}

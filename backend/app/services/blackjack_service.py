@@ -1,11 +1,11 @@
 import uuid
 
+from app.config.settings import get_settings
 from app.core.games.blackjack.engine import BlackjackEngine
 from app.core.games.blackjack.rules import BlackjackRules
-from app.core.games.blackjack.side_bets import SideBetResult, evaluate_perfect_pairs, evaluate_21_3
+from app.core.games.blackjack.side_bets import SideBetResult, evaluate_21_3, evaluate_perfect_pairs
 from app.core.games.blackjack.state import BlackjackState, GamePhase, PlayerAction
 from app.core.rng.rng import make_rng
-from app.config.settings import get_settings
 from app.services.wallet_service import WalletService
 
 

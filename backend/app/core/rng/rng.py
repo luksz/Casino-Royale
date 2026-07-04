@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import random
 import secrets
-from typing import Protocol, TypeVar, Any
+from typing import Any, Protocol, TypeVar
 
 T = TypeVar("T")
 

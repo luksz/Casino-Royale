@@ -28,7 +28,11 @@ def get_blackjack_service(
 
 
 def _hand_to_response(hand: BlackjackHand, hide_hole: bool = False) -> HandStateResponse:
-    cards = [hand.cards[0].code, "??"] if hide_hole and len(hand.cards) >= 2 else [c.code for c in hand.cards]
+    cards = (
+        [hand.cards[0].code, "??"]
+        if hide_hole and len(hand.cards) >= 2
+        else [c.code for c in hand.cards]
+    )
     return HandStateResponse(
         cards=cards,
         value=hand.value if not hide_hole else hand.cards[0].rank.blackjack_value,
@@ -61,7 +65,10 @@ def _state_to_response(
         round_id=round_id,
         phase=state.phase,
         player_hands=[_hand_to_response(h) for h in state.player_hands],
-        dealer_hand=_hand_to_response(state.dealer_hand, hide_hole=hide_hole and state.phase == GamePhase.PLAYER_TURN),
+        dealer_hand=_hand_to_response(
+            state.dealer_hand,
+            hide_hole=hide_hole and state.phase == GamePhase.PLAYER_TURN,
+        ),
         current_hand_index=state.current_hand_index,
         bet=state.bet,
         legal_actions=state.available_actions,

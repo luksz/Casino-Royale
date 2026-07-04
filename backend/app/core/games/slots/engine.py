@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
 
+from app.core.rng.rng import RNG
+
 
 class Symbol(Enum):
     CHERRY = "🍒"
@@ -14,13 +16,20 @@ class Symbol(Enum):
 WEIGHTS = [30, 25, 20, 15, 8, 2]
 SYMBOLS = list(Symbol)
 
+# Net multipliers for three of a kind. Tuned with pair consolations below
+# to an overall RTP of ~93.6% (house edge ~6.4%).
 PAYOUTS: dict[Symbol, int] = {
-    Symbol.CHERRY: 2,
-    Symbol.LEMON: 3,
-    Symbol.GRAPE: 5,
-    Symbol.STAR: 10,
-    Symbol.DIAMOND: 25,
-    Symbol.SEVEN: 100,
+    Symbol.CHERRY: 5,
+    Symbol.LEMON: 8,
+    Symbol.GRAPE: 15,
+    Symbol.STAR: 25,
+    Symbol.DIAMOND: 60,
+    Symbol.SEVEN: 200,
+}
+
+PAIR_PAYOUTS: dict[Symbol, int] = {
+    Symbol.CHERRY: 1,
+    Symbol.SEVEN: 5,
 }
 
 
@@ -33,7 +42,7 @@ class SlotResult:
 
 
 class SlotsEngine:
-    def __init__(self, rng) -> None:
+    def __init__(self, rng: RNG) -> None:
         self._rng = rng
 
     def spin(self, stake: int) -> SlotResult:
@@ -41,12 +50,12 @@ class SlotsEngine:
 
         if reels[0] == reels[1] == reels[2]:
             mult = PAYOUTS[reels[0]]
-        elif Symbol.CHERRY in (reels[0], reels[1]) and Symbol.CHERRY in (reels[1], reels[2]):
-            mult = 1
-        elif reels[0] == Symbol.CHERRY or reels[1] == Symbol.CHERRY:
-            mult = 1
         else:
             mult = 0
+            for sym, pair_mult in PAIR_PAYOUTS.items():
+                if reels.count(sym) == 2:
+                    mult = pair_mult
+                    break
 
         net = stake * mult if mult > 0 else -stake
         return SlotResult(

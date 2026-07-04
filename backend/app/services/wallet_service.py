@@ -29,7 +29,9 @@ class WalletService:
         player = await self._repo.get(player_id)
         new_balance = player.balance + amount
         await self._repo.update_balance(player_id, new_balance)
-        return WalletTransaction(player_id=player_id, amount=amount, new_balance=new_balance, kind="credit")
+        return WalletTransaction(
+            player_id=player_id, amount=amount, new_balance=new_balance, kind="credit"
+        )
 
     async def debit(self, player_id: str, amount: int) -> WalletTransaction:
         if amount <= 0:
@@ -39,7 +41,9 @@ class WalletService:
             raise InsufficientFundsError(f"Balance {player.balance} < {amount}")
         new_balance = player.balance - amount
         await self._repo.update_balance(player_id, new_balance)
-        return WalletTransaction(player_id=player_id, amount=amount, new_balance=new_balance, kind="debit")
+        return WalletTransaction(
+            player_id=player_id, amount=amount, new_balance=new_balance, kind="debit"
+        )
 
     async def get_balance(self, player_id: str) -> int:
         player = await self._repo.get(player_id)

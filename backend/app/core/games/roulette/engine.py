@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from app.core.games.roulette.bets import Bet
 from app.core.games.roulette.wheel import EuropeanWheel
+from app.core.rng.rng import RNG
 
 
 @dataclass
@@ -23,7 +24,7 @@ class SpinResult:
 
 
 class RouletteEngine:
-    def __init__(self, rng) -> None:
+    def __init__(self, rng: RNG) -> None:
         self._rng = rng
 
     def spin(self, bets: list[Bet]) -> SpinResult:
